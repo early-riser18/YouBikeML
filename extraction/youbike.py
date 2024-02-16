@@ -13,6 +13,16 @@ class YoubikeSnapshot:
 
 
 def get_youbike_data() -> YoubikeSnapshot:
+    """
+    Returns the requested data from the youbike endpoint.
+
+        Parameters:
+            None -- Endpoint is a constant
+
+        Returns:
+            YoubikeSnapshot -- Object containing the requested data
+    """
+
     URL = "https://gcs-youbike2-linebot.microprogram.tw/latest-data/youbike-station.csv"
     r = requests.request("GET", URL)
 
@@ -23,8 +33,14 @@ def get_youbike_data() -> YoubikeSnapshot:
 
 
 def basic_preprocessing(data: YoubikeSnapshot) -> YoubikeSnapshot:
-    """Attemps to apply simple preprocessing.
-    Returns preprocessed data
+    """
+    Applies simple preprocessing.
+
+        Parameters:
+            data (YoubikeSnapshot) -- The raw snapshot to preprocess
+
+        Returns:
+            YoubikeSnapshot -- The preprocessed snapshot
     """
 
     df = pd.read_csv(StringIO(data.body))
@@ -33,11 +49,17 @@ def basic_preprocessing(data: YoubikeSnapshot) -> YoubikeSnapshot:
     data.body = df.to_csv()
     return data
 
-def save_data(data: YoubikeSnapshot) -> str:
-    if CONFIG['env'] == 'local':
-       pass
-    
+
 def download_basic_preprocessed_youbike_snapshot() -> str:
+    """
+    Retrieve Youbike snapshot from endpoint, preprocess it and persist it.
+
+        Parameters:
+            None
+
+        Returns:
+            str -- path to persisted data
+    """
     data = get_youbike_data()
     file_stub = f"youbike_dock_info_{data.extraction_ts:%Y-%m-%d_%H:%M:%S}_raw"
     try:
