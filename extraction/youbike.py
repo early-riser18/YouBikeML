@@ -70,9 +70,12 @@ def download_basic_preprocessed_youbike_snapshot() -> str:
         print("An error occured while preprocessing the data")
 
     file_path = file_stub + ".csv"
-    with open(f'./raw_data/{file_path}', 'w') as f:
+    with open(f"./raw_data/{file_path}", "w") as f:
         f.write(preprocessed_data.body)
     return file_path
 
-print(CONFIG)
-download_basic_preprocessed_youbike_snapshot()
+
+print("Running module with env:", CONFIG)
+
+if __name__ == "__main__":
+    download_basic_preprocessed_youbike_snapshot()
