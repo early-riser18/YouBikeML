@@ -4,6 +4,7 @@ from datetime import datetime
 import pytz
 from io import StringIO
 from utils.env_config import CONFIG
+from utils.utils import get_formatted_timestamp_as_str
 
 
 class YoubikeSnapshot:
@@ -64,7 +65,8 @@ def download_basic_preprocessed_youbike_snapshot() -> str:
             str -- path to persisted data
     """
     data = get_youbike_data()
-    file_stub = f"youbike_dock_info_{data.extraction_ts:%Y-%m-%d_%H:%M:%S}_raw"
+    formatted_ts = get_formatted_timestamp_as_str(data.extraction_ts)
+    file_stub = f"youbike_dock_info_{formatted_ts}_raw"
     try:
         preprocessed_data = basic_preprocessing(data)
     except:
