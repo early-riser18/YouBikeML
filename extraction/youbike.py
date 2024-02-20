@@ -45,7 +45,10 @@ def basic_preprocessing(data: YoubikeSnapshot) -> YoubikeSnapshot:
     """
 
     df = pd.read_csv(StringIO(data.body))
-    df["last_update_ts"] = pd.to_datetime(df["updated_at"], unit="s")
+    df["last_update_ts"] = (pd.to_datetime(df["updated_at"], unit="s")
+                            .dt.tz_localize(tz='UTC')
+                            .dt.tz_convert(tz='Asia/Taipei')
+    )
     df.drop(labels=["updated_at"], axis=1, inplace=True)
     data.body = df.to_csv()
     return data
