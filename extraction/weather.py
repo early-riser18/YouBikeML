@@ -7,7 +7,7 @@ import pytz
 from datetime import datetime
 from functools import reduce
 from utils.utils import get_formatted_timestamp_as_str
-
+from utils.s3_helper import ConnectionToS3, export_csv_to_s3
 
 class WeatherSnapshot:
     def __init__(
@@ -100,14 +100,20 @@ def create_object_from_response(data: any) -> WeatherSnapshot:
 
 
 def persist_data(data: WeatherSnapshot) -> str:
-    # TODO: Logic for writing depending on env.
+    s3_co = ConnectionToS3.from_env()
     formated_ts = get_formatted_timestamp_as_str(data.extraction_ts)
-    file_path = f"./raw_data/weather_data_raw_{formated_ts}.csv"
-    data.body.to_csv(file_path, index=False)
-    return file_path
+    file_path = f"raw_data/weather_data_raw_{formated_ts}.csv"
+    data_as_csv =data.body.to_csv(index=False)
+    r = export_csv_to_s3(
+        connection=s3_co,
+        file_name=file_path,
+        body=data_as_csv
+    )
+    return r
 
 
 if __name__ == "__main__":
     weather_response = get_weather_data()
     weather_snapshot_obj = create_object_from_response(weather_response)
-    persist_data(weather_snapshot_obj)
+    r = persist_data(weather_snapshot_obj)
+    print(r)

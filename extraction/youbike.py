@@ -54,7 +54,7 @@ def basic_preprocessing(data: YoubikeSnapshot) -> YoubikeSnapshot:
     return data
 
 
-def download_basic_preprocessed_youbike_snapshot() -> str:
+def upload_to_dl_basic_preprocessed_youbike_snapshot() -> str:
     """
     Retrieve Youbike snapshot from endpoint, preprocess it and persist it.
 
@@ -64,23 +64,27 @@ def download_basic_preprocessed_youbike_snapshot() -> str:
         Returns:
             str -- path to persisted data
     """
+    s3_co = ConnectionToS3.from_env()
     data = get_youbike_data()
     formatted_ts = get_formatted_timestamp_as_str(data.extraction_ts)
-    file_stub = f"youbike_dock_info_{formatted_ts}_raw"
+    file_stub = f"raw_data/youbike_dock_info_{formatted_ts}_raw"
     try:
         preprocessed_data = basic_preprocessing(data)
     except:
         preprocessed_data = data
-        file_stup += "error"
+        file_stub += "error"
         print("An error occured while preprocessing the data")
 
     file_path = file_stub + ".csv"
-    with open(f"./raw_data/{file_path}", "w") as f:
-        f.write(preprocessed_data.body)
-    return file_path
+
+    upload_uri = export_csv_to_s3(
+        connection=s3_co, file_name=file_path, body=preprocessed_data.body
+    )
+
+    return upload_uri
 
 
 print("Running module with env:", CONFIG)
 
 if __name__ == "__main__":
-    download_basic_preprocessed_youbike_snapshot()
+    upload_to_dl_basic_preprocessed_youbike_snapshot()
