@@ -9,6 +9,7 @@ from functools import reduce
 from utils.utils import get_formatted_timestamp_as_str
 from utils.s3_helper import ConnectionToS3, export_csv_to_s3
 
+
 class WeatherSnapshot:
     def __init__(
         self,
@@ -103,12 +104,8 @@ def persist_data(data: WeatherSnapshot) -> str:
     s3_co = ConnectionToS3.from_env()
     formated_ts = get_formatted_timestamp_as_str(data.extraction_ts)
     file_path = f"raw_data/weather_data_raw_{formated_ts}.csv"
-    data_as_csv =data.body.to_csv(index=False)
-    r = export_csv_to_s3(
-        connection=s3_co,
-        file_name=file_path,
-        body=data_as_csv
-    )
+    data_as_csv = data.body.to_csv(index=False)
+    r = export_csv_to_s3(connection=s3_co, file_name=file_path, body=data_as_csv)
     return r
 
 

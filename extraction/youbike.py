@@ -5,6 +5,7 @@ import pytz
 from io import StringIO
 from utils.env_config import CONFIG
 from utils.utils import get_formatted_timestamp_as_str
+from utils.s3_helper import ConnectionToS3, export_csv_to_s3
 
 
 class YoubikeSnapshot:
@@ -45,9 +46,10 @@ def basic_preprocessing(data: YoubikeSnapshot) -> YoubikeSnapshot:
     """
 
     df = pd.read_csv(StringIO(data.body))
-    df["last_update_ts"] = (pd.to_datetime(df["updated_at"], unit="s")
-                            .dt.tz_localize(tz='UTC')
-                            .dt.tz_convert(tz='Asia/Taipei')
+    df["last_update_ts"] = (
+        pd.to_datetime(df["updated_at"], unit="s")
+        .dt.tz_localize(tz="UTC")
+        .dt.tz_convert(tz="Asia/Taipei")
     )
     df.drop(labels=["updated_at"], axis=1, inplace=True)
     data.body = df.to_csv()
