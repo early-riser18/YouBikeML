@@ -16,10 +16,12 @@ class ConnectionToS3:
         bucket_name: str,
         aws_access_key_id: str,
         aws_secret_access_key: str,
+        endpoint_url: str = None,
         region_name: str = "ap-northeast-1",
     ):
         self._resource = boto3.resource(
             "s3",
+            endpoint_url=endpoint_url,
             region_name=region_name,
             aws_access_key_id=aws_access_key_id,
             aws_secret_access_key=aws_secret_access_key,
@@ -31,7 +33,12 @@ class ConnectionToS3:
         app_env = os.getenv("APP_ENV", "local")
         print("Loading from env: ", app_env)
         if app_env == "local":
-            raise Exception("local env not supported")
+            return cls(
+                "local-youbike",
+                os.environ["MINIO_ACCESS_KEY_ID"],
+                os.environ["MINIO_SECRET_ACCESS_KEY"],
+                'http://localhost:9000'
+            )
         elif app_env == "stage":
             return cls(
                 "stage-youbike",
