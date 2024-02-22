@@ -4,6 +4,13 @@ import pandas as pd
 
 
 class ConnectionToS3:
+    """Factory method object to create an active boto3 S3 resource. Ensure the correct env variables are set before calling this object.
+
+    Available class method:
+        from_env(): create connection from environment variables
+
+    """
+
     def __init__(
         self,
         bucket_name: str,
@@ -44,6 +51,9 @@ class ConnectionToS3:
 
 
 def export_csv_to_s3(connection: ConnectionToS3, file_name: str, body=None) -> str:
+    """Upload a csv or text-like file to an s3 bucket at the specified path
+
+    Return: URI of the uploaded object"""
     obj = connection.resource.Object(connection.bucket_name, file_name)
     obj.put(Body=body)
     return f"s3://{connection.bucket_name}/{file_name}"
