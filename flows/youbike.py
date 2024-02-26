@@ -3,17 +3,16 @@ import pandas as pd
 from datetime import datetime
 import pytz
 from io import StringIO
-from utils.env_config import CONFIG
 from utils.utils import get_formatted_timestamp_as_str
 from utils.s3_helper import ConnectionToS3, export_csv_to_s3
-
+from prefect import task, flow
 
 class YoubikeSnapshot:
     def __init__(self, extraction_ts: datetime, body: str):
         self.extraction_ts = extraction_ts
         self.body = body
 
-
+@task(log_prints=True)
 def get_youbike_data() -> YoubikeSnapshot:
     """
     Returns the requested data from the youbike endpoint.
@@ -27,13 +26,14 @@ def get_youbike_data() -> YoubikeSnapshot:
 
     URL = "https://gcs-youbike2-linebot.microprogram.tw/latest-data/youbike-station.csv"
     r = requests.request("GET", URL)
-
+    if r.status_code != 200:
+        raise Exception(f"API call to {URL} failed.")
     tz_tst = pytz.timezone("Asia/Taipei")
     time_now = datetime.today().now(tz=tz_tst)
     data = YoubikeSnapshot(extraction_ts=time_now, body=r.text)
     return data
 
-
+@task(log_prints=True)
 def basic_preprocessing(data: YoubikeSnapshot) -> YoubikeSnapshot:
     """
     Applies simple preprocessing.
@@ -51,11 +51,13 @@ def basic_preprocessing(data: YoubikeSnapshot) -> YoubikeSnapshot:
         .dt.tz_localize(tz="UTC")
         .dt.tz_convert(tz="Asia/Taipei")
     )
+    extraction_ts = data.extraction_ts.replace(microsecond=0)
+    df["extraction_ts"] = extraction_ts
     df.drop(labels=["updated_at"], axis=1, inplace=True)
     data.body = df.to_csv()
     return data
 
-
+@flow(log_prints=True)
 def upload_to_dl_basic_preprocessed_youbike_snapshot() -> str:
     """
     Retrieve Youbike snapshot from endpoint, preprocess it and persist it.
@@ -78,15 +80,12 @@ def upload_to_dl_basic_preprocessed_youbike_snapshot() -> str:
         print("An error occured while preprocessing the data")
 
     file_path = file_stub + ".csv"
-
+    print(data.body)
     upload_uri = export_csv_to_s3(
         connection=s3_co, file_name=file_path, body=preprocessed_data.body
     )
 
     return upload_uri
 
-
-print("Running module with env:", CONFIG)
-
 if __name__ == "__main__":
-    upload_to_dl_basic_preprocessed_youbike_snapshot()
+    print(upload_to_dl_basic_preprocessed_youbike_snapshot())
