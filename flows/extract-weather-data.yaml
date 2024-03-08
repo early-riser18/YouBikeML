@@ -27,8 +27,8 @@ infrastructure:
   type: ecs-task
   env:
     APP_ENV: stage
-    AWS_ACCESS_KEY_ID: AKIATCKASUJD66QJBVO5
-    AWS_SECRET_ACCESS_KEY: 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
+    AWS_ACCESS_KEY_ID: null
+    AWS_SECRET_ACCESS_KEY: null
     PREFECT_LOGGING_LEVEL: DEBUG
   labels: {}
   name: null
