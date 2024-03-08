@@ -13,3 +13,17 @@ services:
       MINIO_ADDRESS: ':9000'
       MINIO_CONSOLE_ADDRESS: ':9001'
     command: minio server /data
+    networks:
+      - network1
+  # youbike-extraction:
+  #   image: test-prefect:0.1
+  #   environment:
+  #     - MINIO_HOST=minio-server
+  #     - FLOW_NAME
+  #   networks:
+  #     - default-bridge
+
+networks:
+  network1:
+    name: youbike
+    external: true

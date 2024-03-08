@@ -1,0 +1,84 @@
+###
+### A complete description of a Prefect Deployment for flow 'extract-weather-data'
+###
+name: extract_weather_stage
+description: null
+version: 375b978c3e12e4305496ba919fe64f41
+# The work queue that will handle this deployment's runs
+work_queue_name: ecs-agent
+work_pool_name: default-agent-pool
+tags: []
+parameters: {}
+schedules:
+- schedule:
+    interval: 86400.0
+    anchor_date: '2024-03-08T00:00:00+00:00'
+    timezone: Asia/Taipei
+  active: true
+is_schedule_active: true
+infra_overrides: {}
+
+###
+### DO NOT EDIT BELOW THIS LINE
+###
+flow_name: extract-weather-data
+manifest_path: null
+infrastructure:
+  type: ecs-task
+  env:
+    APP_ENV: stage
+    AWS_ACCESS_KEY_ID: null
+    AWS_SECRET_ACCESS_KEY: null
+    PREFECT_LOGGING_LEVEL: DEBUG
+  labels: {}
+  name: null
+  command: null
+  aws_credentials:
+    aws_access_key_id: null
+    aws_secret_access_key: null
+    aws_session_token: null
+    profile_name: null
+    region_name: null
+    aws_client_parameters:
+      api_version: null
+      use_ssl: true
+      verify: true
+      verify_cert_path: null
+      endpoint_url: null
+      config: null
+    block_type_slug: aws-credentials
+  task_definition_arn: null
+  task_definition: null
+  family: null
+  image: 211125707335.dkr.ecr.ap-northeast-1.amazonaws.com/prefect-flows:latest
+  auto_deregister_task_definition: true
+  cpu: null
+  memory: null
+  execution_role_arn: arn:aws:iam::211125707335:role/prefect-agent-execution-role-stage
+  configure_cloudwatch_logs: true
+  cloudwatch_logs_options: {}
+  stream_output: null
+  launch_type: FARGATE
+  vpc_id: vpc-018a52b77cf0fc715
+  cluster: arn:aws:ecs:ap-northeast-1:211125707335:cluster/prefect-agent-stage
+  task_role_arn: arn:aws:iam::211125707335:role/prefect-agent-task-role-stage
+  task_customizations: []
+  task_start_timeout_seconds: 400
+  task_watch_poll_interval: 5.0
+  _block_document_id: c7191db1-9104-4717-8af8-ce16a718a1c7
+  _block_document_name: prefect-flows-stage
+  _is_anonymous: false
+  block_type_slug: ecs-task
+  _block_type_slug: ecs-task
+storage: null
+path: /opt/prefect/flows
+entrypoint: flows/weather.py:extract_weather_data
+parameter_openapi_schema:
+  title: Parameters
+  type: object
+  properties: {}
+  required: null
+  definitions: null
+timestamp: '2024-03-08T08:13:52.787704+00:00'
+triggers: []
+enforce_parameter_schema: null

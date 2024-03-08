@@ -8,7 +8,7 @@ from datetime import datetime
 from functools import reduce
 from utils.utils import get_formatted_timestamp_as_str
 from utils.s3_helper import ConnectionToS3, export_csv_to_s3
-
+from prefect import flow, task
 
 class WeatherSnapshot:
     def __init__(
@@ -19,7 +19,7 @@ class WeatherSnapshot:
         self.extraction_ts = extraction_ts
         self.body = body
 
-
+@task(log_prints=True)
 def get_weather_data() -> WeatherSnapshot:
     """Returns the requested data from the weather API"""
     retry_session = retry(retries=5, backoff_factor=0.2)
@@ -99,7 +99,7 @@ def create_object_from_response(data: any) -> WeatherSnapshot:
     )
     return weather_object
 
-
+@task(log_prints=True)
 def persist_data(data: WeatherSnapshot) -> str:
     s3_co = ConnectionToS3.from_env()
     formated_ts = get_formatted_timestamp_as_str(data.extraction_ts)
@@ -108,9 +108,12 @@ def persist_data(data: WeatherSnapshot) -> str:
     r = export_csv_to_s3(connection=s3_co, file_name=file_path, body=data_as_csv)
     return r
 
-
-if __name__ == "__main__":
+@flow(log_prints=True)
+def extract_weather_data():
     weather_response = get_weather_data()
     weather_snapshot_obj = create_object_from_response(weather_response)
     r = persist_data(weather_snapshot_obj)
-    print(r)
+    print("Extracted data uploaded at ", r)
+
+if __name__ == "__main__":
+    extract_weather_data()

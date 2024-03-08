@@ -37,7 +37,7 @@ class ConnectionToS3:
                 "local-youbike",
                 os.environ["MINIO_ACCESS_KEY_ID"],
                 os.environ["MINIO_SECRET_ACCESS_KEY"],
-                'http://localhost:9000'
+                f'http://{os.environ["MINIO_HOST"]}:9000'
             )
         elif app_env == "stage":
             return cls(
