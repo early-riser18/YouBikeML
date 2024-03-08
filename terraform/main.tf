@@ -1,31 +1,32 @@
 #for some ref https://www.clickittech.com/devops/terraform-best-practices/
 
 terraform {
-	backend "remote" {
-	  organization = "early-riser18-perso"	
+  backend "remote" {
+    organization = "early-riser18-perso"
 
-	workspaces {
-	  name = "youbike"
-	}
-	}
+    workspaces {
+      name = "youbike"
+    }
+  }
 
   required_providers {
-	aws = {
-		source = "hashicorp/aws"
-		version = "~> 4.16"
-	}
+    aws = {
+      source  = "hashicorp/aws"
+      version = "~> 4.16"
+    }
   }
   required_version = ">=1.2.0"
 
 }
 
 provider "aws" {
+  region  = var.aws_region
   profile = "personal"
 }
 
 
 resource "aws_s3_bucket" "s3_bucket_stage" {
-	bucket = var.s3_bucket_stage_name
+  bucket = var.s3_bucket_stage_name
 }
 
 resource "aws_s3_bucket_public_access_block" "public_access_stage" {
