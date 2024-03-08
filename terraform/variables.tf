@@ -12,3 +12,5 @@ variable "org_name" {
 	type = string
 	default = "early-riser18-perso"
 }
+
+variable "prefect_api_key" {}
