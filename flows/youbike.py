@@ -14,6 +14,7 @@ class YoubikeSnapshot:
         self.extraction_ts = extraction_ts
         self.body = body
 
+
 @task(log_prints=True)
 def get_youbike_data() -> YoubikeSnapshot:
     """
@@ -34,6 +35,7 @@ def get_youbike_data() -> YoubikeSnapshot:
     time_now = datetime.today().now(tz=tz_tst)
     data = YoubikeSnapshot(extraction_ts=time_now, body=r.text)
     return data
+
 
 @task(log_prints=True)
 def basic_preprocessing(data: YoubikeSnapshot) -> YoubikeSnapshot:
@@ -59,6 +61,7 @@ def basic_preprocessing(data: YoubikeSnapshot) -> YoubikeSnapshot:
     data.body = df.to_csv()
     return data
 
+
 @flow(log_prints=True)
 def upload_to_dl_basic_preprocessed_youbike_snapshot() -> str:
     """
@@ -82,12 +85,12 @@ def upload_to_dl_basic_preprocessed_youbike_snapshot() -> str:
         print("An error occured while preprocessing the data")
 
     file_path = file_stub + ".csv"
-    print(data.body)
     upload_uri = export_csv_to_s3(
         connection=s3_co, file_name=file_path, body=preprocessed_data.body
     )
 
     return upload_uri
+
 
 if __name__ == "__main__":
 
