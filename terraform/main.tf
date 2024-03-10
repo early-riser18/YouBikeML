@@ -37,6 +37,8 @@ resource "aws_s3_bucket_public_access_block" "public_access_stage" {
   ignore_public_acls      = true
   restrict_public_buckets = true
 }
+
+#AWS NETWORKING
 resource "aws_vpc" "main" {
   cidr_block           = "10.0.0.0/24"
   instance_tenancy     = "default"
@@ -76,59 +78,105 @@ resource "aws_route_table" "public-route-table" {
 }
 
 
-module "prefect_ecs_agent" {
-  source = "github.com/PrefectHQ/prefect-recipes//devops/infrastructure-as-code/aws/tf-prefect2-ecs-agent"
-
-  name                        = "stage"
-  prefect_account_id          = "89a0da5e-d24f-4c42-9c16-ba705499f108"
-  prefect_workspace_id        = "d36bb0e9-91d2-468d-a0e2-9350c7ee85fc"
-  agent_subnets               = [aws_subnet.prefect_ecs_public_subnet.id]
-  agent_queue_name            = "ecs-agent"
-  vpc_id                      = aws_vpc.main.id
-  agent_log_retention_in_days = 14
-  agent_memory                = 512
-  agent_cpu                   = 256
-  prefect_api_key             = "pnu_B3WA26bV1aWk6dFgdDXpnumHKEXv8N456mQ5"
-
-
+resource "aws_iam_role" "prefect_execution_role_stage" {
+  name = "prefect-execution-role-stage"
+  assume_role_policy = jsonencode({
+    Statement = [
+      {
+        Action    = "sts:AssumeRole"
+        Effect    = "Allow"
+        Principal = {
+          Service = "ecs-tasks.amazonaws.com"
+        }
+      },
+    ]
+    Version = "2012-10-17"
+  })
+  managed_policy_arns = ["arn:aws:iam::aws:policy/service-role/AmazonECSTaskExecutionRolePolicy"]
 }
 
-resource "aws_iam_policy" "patched_prefect_task_role" {
-  description = "An extra policy to fix improper default configuration of module prefect_ecs_agent"
-  name        = "patched_prefect_module_task_role"
-  policy      = <<EOF
-{
-	"Version": "2012-10-17",
-	"Statement": [
-		{
-			"Action": [
-				"ec2:DescribeSubnets",
-				"ec2:DescribeVpcs",
-				"ecr:BatchCheckLayerAvailability",
-				"ecr:BatchGetImage",
-				"ecr:GetAuthorizationToken",
-				"ecr:GetDownloadUrlForLayer",
-				"ecs:DeregisterTaskDefinition",
-				"ecs:DescribeTasks",
-				"ecs:RegisterTaskDefinition",
-				"ecs:RunTask",
-				"ecs:StopTask",
-				"ecs:TagResource",
-				"iam:PassRole",
-				"logs:CreateLogGroup",
-				"logs:CreateLogStream",
-				"logs:GetLogEvents",
-				"logs:PutLogEvents"
-			],
-			"Effect": "Allow",
-			"Resource": "*"
-		}
-	]
-}
-  EOF
+resource "aws_iam_role_policy" "logs_allow_create_log_group_stage" {
+  name   = "logs-allow-create-log-group-stage"
+  role   = aws_iam_role.prefect_execution_role_stage.id
+  policy = jsonencode({
+    Statement = [
+      {
+        Action   = ["logs:CreateLogGroup"]
+        Effect   = "Allow"
+        Resource = "*"
+      },
+    ]
+    Version = "2012-10-17"
+  })
 }
 
-resource "aws_iam_role_policy_attachment" "set_patched_prefect_task_role_policy" {
-  role       = "prefect-agent-task-role-stage" #Hard coded because unable to access module.prefect_ecs_agent attributes programatically
-  policy_arn = aws_iam_policy.patched_prefect_task_role.arn
+# IAM Role for Prefect Agent Task
+resource "aws_iam_role" "prefect_task_role_stage" {
+  name = "prefect-task-role-stage"
+  assume_role_policy = jsonencode({
+    Statement = [
+      {
+        Action    = "sts:AssumeRole"
+        Effect    = "Allow"
+        Principal = {
+          Service = "ecs-tasks.amazonaws.com"
+        }
+      },
+    ]
+    Version = "2012-10-17"
+  })
+}
+
+resource "aws_iam_role_policy" "prefect_allow_ecs_task_stage" {
+  name   = "prefect-allow-ecs-task-stage"
+  role   = aws_iam_role.prefect_task_role_stage.id
+  policy = jsonencode({
+    Statement = [
+      {
+        Action   = [
+          "ec2:DescribeSubnets",
+          "ec2:DescribeVpcs",
+          "ecr:BatchCheckLayerAvailability",
+          "ecr:BatchGetImage",
+          "ecr:GetAuthorizationToken",
+          "ecr:GetDownloadUrlForLayer",
+          "ecs:DeregisterTaskDefinition",
+          "ecs:DescribeTasks",
+          "ecs:RegisterTaskDefinition",
+          "ecs:RunTask",
+          "ecs:StopTask",
+          "ecs:TagResource",
+          "iam:PassRole",
+          "logs:CreateLogGroup",
+          "logs:CreateLogStream",
+          "logs:GetLogEvents",
+          "logs:PutLogEvents",
+        ]
+        Effect   = "Allow"
+        Resource = "*"
+      },
+    ]
+    Version = "2012-10-17"
+  })
+}
+
+# ECS Cluster for Prefect 
+resource "aws_ecs_cluster" "prefect_cluster_stage" {
+  name = "prefect-stage"
+}
+
+resource "aws_ecs_cluster_capacity_providers" "prefect_cluster_capacity_providers_stage" {
+  cluster_name       = aws_ecs_cluster.prefect_cluster_stage.name
+  capacity_providers = ["FARGATE"]
+}
+
+# CloudWatch Log Group for Prefect 
+resource "aws_cloudwatch_log_group" "prefect_agent_log_group" {
+  name              = "prefect-agent-log-group-stage"
+  retention_in_days = 14
+}
+
+resource "aws_iam_user_policy_attachment" "ecs_task_definition_attach" {
+  user       = "prefect-ecs"
+  policy_arn = "arn:aws:iam::aws:policy/AmazonECS_FullAccess"
 }
