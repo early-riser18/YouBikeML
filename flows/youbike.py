@@ -6,6 +6,8 @@ from io import StringIO
 from utils.utils import get_formatted_timestamp_as_str
 from utils.s3_helper import ConnectionToS3, export_csv_to_s3
 from prefect import task, flow
+from prefect.deployments import Deployment
+
 
 class YoubikeSnapshot:
     def __init__(self, extraction_ts: datetime, body: str):
@@ -88,4 +90,29 @@ def upload_to_dl_basic_preprocessed_youbike_snapshot() -> str:
     return upload_uri
 
 if __name__ == "__main__":
-    print(upload_to_dl_basic_preprocessed_youbike_snapshot())
+
+    if input("Run this flow locally? [type yes]") == "yes":
+        print("Running...\n", upload_to_dl_basic_preprocessed_youbike_snapshot())
+
+    if input("Deploy this flow [type yes]") == "yes":
+        print("Deploying...")
+        a = Deployment.build_from_flow(
+            flow=upload_to_dl_basic_preprocessed_youbike_snapshot,
+            output=f"flows/extract_youbike_data.yaml",
+            name="extract_youbike_stage",
+            work_pool_name="ecs-stage",
+            work_queue_name="default",
+            schedules=[
+                {
+                    "schedule": {
+                        "interval": 600,
+                        "anchor_date": "2024-03-08T00:00:00+00:00",
+                        "timezone": "Asia/Taipei",
+                    },
+                    "active": True,
+                }
+            ],
+            path="/opt/prefect/flows",
+            apply=True,
+            load_existing=False,
+        )
