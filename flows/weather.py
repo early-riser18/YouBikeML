@@ -137,7 +137,7 @@ if __name__ == "__main__":
             schedules=[
                 {
                     "schedule": {
-                        "interval": 86400.0,
+                        "interval": 43200.0,
                         "anchor_date": "2024-03-08T00:00:00+00:00",
                         "timezone": "Asia/Taipei",
                     },
