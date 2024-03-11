@@ -180,3 +180,9 @@ resource "aws_iam_user_policy_attachment" "ecs_task_definition_attach" {
   user       = "prefect-ecs"
   policy_arn = "arn:aws:iam::aws:policy/AmazonECS_FullAccess"
 }
+
+resource "aws_ecr_repository" "prefect-flows" {
+  name                 = "prefect-flows"
+  image_tag_mutability = "MUTABLE"
+  
+}
