@@ -57,8 +57,8 @@ class ConnectionToS3:
         return self._bucket_name
 
 
-def export_csv_to_s3(connection: ConnectionToS3, file_name: str, body=None) -> str:
-    """Upload a csv or text-like file to an s3 bucket at the specified path
+def export_file_to_s3(connection: ConnectionToS3, file_name: str, body=None) -> str:
+    """Upload a text-like file to an s3 bucket at the specified path
 
     Return: URI of the uploaded object"""
     obj = connection.resource.Object(connection.bucket_name, file_name)
@@ -70,6 +70,6 @@ if __name__ == "__main__":
     s3_co = ConnectionToS3.from_env()
 
     df_as_csv = pd.DataFrame({"a": [1, 2, 3], "b": [4, 5, 6]}).to_csv()
-    export_csv_to_s3(
+    export_file_to_s3(
         connection=s3_co, file_name="unit_test/unit_test.csv", body=df_as_csv
     )
