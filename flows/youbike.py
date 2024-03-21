@@ -4,7 +4,7 @@ from datetime import datetime
 import pytz
 from io import StringIO
 from utils.utils import get_formatted_timestamp_as_str
-from utils.s3_helper import ConnectionToS3, export_csv_to_s3
+from utils.s3_helper import ConnectionToS3, export_file_to_s3
 from prefect import task, flow
 from prefect.deployments import Deployment
 
@@ -58,7 +58,7 @@ def basic_preprocessing(data: YoubikeSnapshot) -> YoubikeSnapshot:
     extraction_ts = data.extraction_ts.replace(microsecond=0)
     df["extraction_ts"] = extraction_ts
     df.drop(labels=["updated_at"], axis=1, inplace=True)
-    data.body = df.to_csv()
+    data.body = df.to_parquet(index=False)
     return data
 
 
@@ -84,8 +84,8 @@ def upload_to_dl_basic_preprocessed_youbike_snapshot() -> str:
         file_stub += "error"
         print("An error occured while preprocessing the data")
 
-    file_path = file_stub + ".csv"
-    upload_uri = export_csv_to_s3(
+    file_path = file_stub + ".parquet"
+    upload_uri = export_file_to_s3(
         connection=s3_co, file_name=file_path, body=preprocessed_data.body
     )
 
@@ -97,7 +97,7 @@ if __name__ == "__main__":
     if input("Run this flow locally? [type yes]") == "yes":
         print("Running...\n", upload_to_dl_basic_preprocessed_youbike_snapshot())
 
-    if input("Deploy this flow [type yes]") == "yes":
+    elif input("Deploy this flow [type yes]") == "yes":
         print("Deploying...")
         a = Deployment.build_from_flow(
             flow=upload_to_dl_basic_preprocessed_youbike_snapshot,
