@@ -66,6 +66,19 @@ def export_file_to_s3(connection: ConnectionToS3, file_name: str, body=None) -> 
     return f"s3://{connection.bucket_name}/{file_name}"
 
 
+def download_from_bucket(s3_bucket: ConnectionToS3, remote_path: str, filter: str, dest_dir: str):
+    
+	bucket = s3_bucket.resource.Bucket(s3_bucket.bucket_name)
+
+	for obj in bucket.objects.all():
+		if f'{remote_path}{filter}' in obj.key:
+			local_file_path = os.path.join(dest_dir, obj.key)
+			if '/' in obj.key:
+				os.makedirs(os.path.dirname(local_file_path), exist_ok=True)
+				s3_bucket.resource.meta.client.download_file(s3_bucket.bucket_name, obj.key, local_file_path)
+			print(f"Downloaded {obj.key} at {dest_dir}")
+
+
 if __name__ == "__main__":
     s3_co = ConnectionToS3.from_env()
 
