@@ -1,7 +1,7 @@
 from extraction.weather import WeatherAPI, WeatherConfig, WeatherSnapshot
 from prefect import flow, task
 from utils.utils import get_formatted_timestamp_as_str
-from utils.s3_helper import ConnectionToS3, export_csv_to_s3
+from utils.s3_helper import ConnectionToS3, export_file_to_s3
 from prefect.deployments import Deployment
 from datetime import date, timedelta
 
@@ -35,7 +35,7 @@ def persist_data(
     file_path = f"{folder_path}/{file_stub}_{formatted_extraction_ts}.csv"
     data_as_csv = data.body.to_csv(index=False)
 
-    upload_path = export_csv_to_s3(
+    upload_path = export_file_to_s3(
         connection=s3_co, file_name=file_path, body=data_as_csv
     )
     return upload_path
@@ -86,7 +86,7 @@ if __name__ == "__main__":
                 {
                     "schedule": {
                         "interval": 604800,
-                        "anchor_date": "2024-03-08T00:00:00+08:00",
+                        "anchor_date": "2024-03-28T00:00:00+08:00",
                         "timezone": "Asia/Taipei",
                     },
                     "active": True,

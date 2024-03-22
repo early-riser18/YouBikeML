@@ -3,7 +3,7 @@
 ###
 name: get_weather_forecast_report
 description: null
-version: 1555bdb1769dddddea08a81db107cfe7
+version: a741b464cf85edc7fa0dbf84cd1a840f
 # The work queue that will handle this deployment's runs
 work_queue_name: default
 work_pool_name: ecs-stage
@@ -56,6 +56,6 @@ parameter_openapi_schema:
       type: integer
   required: null
   definitions: null
-timestamp: '2024-03-21T08:22:15.166695+00:00'
+timestamp: '2024-03-22T02:30:26.589070+00:00'
 triggers: []
 enforce_parameter_schema: null
