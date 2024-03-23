@@ -20,8 +20,8 @@ The predictive model is hosted on the cloud and queried via API. When requesting
 The model is retrained periodically based on the latest historical data. 
 
 ### Data sources
-YouBike Stations data is obtained via [YouBike Official Website](https://www.youbike.com.tw/region/main/stations/)
-Weather data is obtained thanks to the [Open Meteo API](https://open-meteo.com/)
+YouBike Stations data is obtained via [YouBike Official Website](https://www.youbike.com.tw/region/main/stations/)<br>
+Weather data is obtained thanks to the [Open Meteo API](https://open-meteo.com/)<br>
  
 # Set up project
 ## Locally
