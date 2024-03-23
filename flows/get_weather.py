@@ -13,6 +13,9 @@ def extract_weather_data(
     past_end_date_rel: int = 0,
     forecast_days: int = None,
 ) -> WeatherSnapshot:
+    """
+    Wrapper function to support instanciating a WeatherAPI with a dynamic time range. Required for scheduled flows.
+    """
     if forecast_days is None:
         api = WeatherAPI.historic_report(
             weather_config,
@@ -30,6 +33,9 @@ def extract_weather_data(
 def persist_data(
     data: WeatherSnapshot, folder_path: str = "/", file_stub: str = "weather_data_raw"
 ) -> str:
+    """
+    Store data to your object storage according to env config.
+    """
     s3_co = ConnectionToS3.from_env()
     formatted_extraction_ts = get_formatted_timestamp_as_str(data.extraction_ts)
     file_path = f"{folder_path}/{file_stub}_{formatted_extraction_ts}.csv"
@@ -47,6 +53,13 @@ def get_weather_report(
     past_end_date_rel: int = None,
     forecast_days: int = None,
 ) -> str:
+    """
+    Flow to query weather data. Currently supports either historical report or forecast report. 
+    If no forecast_days parameter is passed, then it defaults to getting a historical report.
+
+    Returns
+        str : The path where the retrieved weather report has been uploaded.
+    """
     w_snapshot = extract_weather_data(
         WeatherConfig(),
         past_start_date_rel=past_start_date_rel,

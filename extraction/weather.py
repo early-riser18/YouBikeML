@@ -6,7 +6,6 @@ import pandas as pd
 import numpy as np
 import pytz
 from datetime import datetime
-from functools import reduce
 
 
 class WeatherSnapshot:
@@ -98,6 +97,9 @@ class WeatherAPI:
         return self._raw_response
 
     def _request_data(self) -> list[WeatherApiResponse]:
+        """
+        Private method to call api endpoint. Response format is dependent on API.
+        """
         retry_session = retry(retries=5, backoff_factor=0.2)
         openmeteo = openmeteo_requests.Client(session=retry_session)
         responses = openmeteo.weather_api(
@@ -150,6 +152,7 @@ class WeatherAPI:
             .tz_convert("Asia/Taipei")
         )
 
+        # Build WeatherSnapshot object
         tz_tst = pytz.timezone("Asia/Taipei")
         time_now = datetime.today().now(tz=tz_tst)
         weather_object = WeatherSnapshot(
@@ -158,6 +161,15 @@ class WeatherAPI:
         return weather_object
 
     def request_data(self) -> WeatherSnapshot:
+        """
+        Calls the Open Meteo API, transforms the data according to interface and returns it.
+
+            Parameters:
+                None
+
+            Returns:
+                WeatherSnapshot for all locations requested.
+        """
         raw_response = self._request_data()
         weather_snapshots = [self._process_raw_snapshot(r) for r in raw_response]
         consolidated_snapshot = self._consolidate_weather_snapshots(weather_snapshots)
@@ -167,8 +179,7 @@ class WeatherAPI:
 if __name__ == "__main__":
 
     print("Running...\n")
-   
 
     api = WeatherAPI.historic_report(WeatherConfig(), "2024-03-01", "2024-03-07")
     res = api.request_data()
-    res.body.to_csv('dfd.csv')
+    res.body.to_csv("dfd.csv")
