@@ -1,14 +1,28 @@
-# YouBike
+# YouBike 🚲
 This project aims at improving the fleet rebalancing of YouBikes in Taiwan.
+Currently provides a tool to predict the number of bikes available at any YouBike station in Taiwan in the next three hours.
+**Try it out on**: Link TBD
 
 ## What is the problem?
 YouBike users who wish to get a bike to travel around the city are sometimes not able to find any bike at the station surrounding them. Therefore they have to rely on other methods of transportation, which might be more expensive, slower or less convenient. 
 
-
 ## How we are solving it
-As a first step, we plan to forecast the average occupancy of youbike stations between now and a few hours in the future (exact duration can be adjusted).
-From there, we aim to help the Youbike team make more informed decisions on which station is most likely to run out of bikes, and therefore need to be resupplied.
+As a first step, we focus on forecasting the number of YouBikes available at any stations in the next three hours.
+From there, we aim to help the Youbike team make more informed decisions on which stations are most likely to run out of bikes, and therefore need to be resupplied.
 
+Youbike stations' current state is ingested every 30 minutes, transformed and clean to form a standardized layer for downstream services.
+# How it works
+A predictive timeseries model is trained using real-time, publicly accessible data on the quantity of bikes docked at YouBike stations, as well as weather data.
+## Requesting a forecast
+The predictive model is hosted on the cloud and queried via API. When requesting to forecast the number of bikes available at Youbike stations, the real-time state of all Youbike stations is retrieved and combined with a forecast of the day's weather.
+
+## Training the model
+The model is retrained periodically based on the latest historical data. 
+
+### Data sources
+YouBike Stations data is obtained via [YouBike Official Website](https://www.youbike.com.tw/region/main/stations/)
+Weather data is obtained thanks to the [Open Meteo API](https://open-meteo.com/)
+ 
 # Set up project
 ## Locally
 Use the ENV variable `APP_ENV: local` to run the project locally via your CLI.
@@ -38,9 +52,9 @@ export MINIO_HOST=localhost
 3. Run any extraction flow via `python3 -m flows.<flow-name>
 4. Inspect the extracted data on `http://localhost:9001` using the credentials set in the previous step.
 ## Cloud Environment
-2. Go to your Prefect Server > Deployments 
-3. Select Quick Run on any deployment of interest. 
-4. Inspect the extracted data on your S3 bucket.
+1. Go to your Prefect Server > Deployments 
+2. Select Quick Run on any deployment of interest. 
+3. Inspect the extracted data on your S3 bucket.
 
 # Infrastructure
 - main components of architecture 
