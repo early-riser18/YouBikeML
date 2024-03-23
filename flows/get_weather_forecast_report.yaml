@@ -1,0 +1,61 @@
+###
+### A complete description of a Prefect Deployment for flow 'get-weather-report'
+###
+name: get_weather_forecast_report
+description: null
+version: a741b464cf85edc7fa0dbf84cd1a840f
+# The work queue that will handle this deployment's runs
+work_queue_name: default
+work_pool_name: ecs-stage
+tags: []
+parameters:
+  forecast_days: 1
+schedule: null
+schedules:
+- schedule:
+    interval: 86400.0
+    anchor_date: '2024-03-08T00:00:00+08:00'
+    timezone: Asia/Taipei
+  active: true
+is_schedule_active: null
+infra_overrides: {}
+infrastructure:
+  type: process
+  env: {}
+  labels: {}
+  name: null
+  command: null
+  stream_output: true
+  working_dir: null
+  block_type_slug: process
+  _block_type_slug: process
+
+###
+### DO NOT EDIT BELOW THIS LINE
+###
+flow_name: get-weather-report
+manifest_path: null
+storage: null
+path: /opt/prefect/flows
+entrypoint: flows/get_weather.py:get_weather_report
+parameter_openapi_schema:
+  title: Parameters
+  type: object
+  properties:
+    past_start_date_rel:
+      title: past_start_date_rel
+      position: 0
+      type: integer
+    past_end_date_rel:
+      title: past_end_date_rel
+      position: 1
+      type: integer
+    forecast_days:
+      title: forecast_days
+      position: 2
+      type: integer
+  required: null
+  definitions: null
+timestamp: '2024-03-22T02:30:26.589070+00:00'
+triggers: []
+enforce_parameter_schema: null
