@@ -1,11 +1,9 @@
 ###
-### A complete description of a Prefect Deployment for flow 'upload-to-dl-basic-preprocessed-youbike-snapshot'
+### A complete description of a Prefect Deployment for flow 'youbike-snapshots-ingestion'
 ###
-name: extract_youbike_stage
-description: "Retrieve Youbike snapshot from endpoint, preprocess it and persist it.\n\
-  \n    Parameters:\n        None\n\n    Returns:\n        str -- path to persisted\
-  \ data"
-version: a16deecbe62ed2fe719ef93fe0bbc8a4
+name: youbike_snapshots_ingestion_stage
+description: ''
+version: b65030eb6f751622d139bdeca80c8ca3
 # The work queue that will handle this deployment's runs
 work_queue_name: default
 work_pool_name: ecs-stage
@@ -34,17 +32,17 @@ infrastructure:
 ###
 ### DO NOT EDIT BELOW THIS LINE
 ###
-flow_name: upload-to-dl-basic-preprocessed-youbike-snapshot
+flow_name: youbike-snapshots-ingestion
 manifest_path: null
 storage: null
 path: /opt/prefect/flows
-entrypoint: flows/youbike.py:upload_to_dl_basic_preprocessed_youbike_snapshot
+entrypoint: flows/youbike_snapshot_ingestion.py:youbike_snapshots_ingestion
 parameter_openapi_schema:
   title: Parameters
   type: object
   properties: {}
   required: null
   definitions: null
-timestamp: '2024-03-10T12:43:32.838471+00:00'
+timestamp: '2024-03-23T06:15:11.861115+00:00'
 triggers: []
 enforce_parameter_schema: null

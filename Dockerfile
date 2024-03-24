@@ -6,6 +6,8 @@ FROM python3.10-prefect
 WORKDIR /opt/prefect
 COPY ./utils ./utils
 COPY ./flows ./flows
+COPY ./extraction ./extraction
+COPY ./transform ./transform
 
 ENV MINIO_ACCESS_KEY_ID=minio-local
 ENV MINIO_SECRET_ACCESS_KEY=minio-local
