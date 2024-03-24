@@ -14,7 +14,7 @@ def extract_weather_data(
     forecast_days: int = None,
 ) -> WeatherSnapshot:
     """
-    Wrapper function to support instanciating a WeatherAPI with a dynamic time range. Required for scheduled flows.
+Wrapper function to support instanciating a WeatherAPI with a dynamic time range. Required for scheduled flows.
     """
     if forecast_days is None:
         api = WeatherAPI.historic_report(
