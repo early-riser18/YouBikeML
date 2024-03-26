@@ -181,7 +181,7 @@ def clean_youbike_data(df: pd.DataFrame) -> pd.DataFrame:
 
     if validate_data_schema(df, RAW_SCHEMA, 13) == False:
         print(df.head(10), df.info())
-        raise AssertionError(f"Failed raw schema validation \n")
+        raise AssertionError(f"Failed clean schema validation \n")
     return df
 
 
