@@ -1,11 +1,11 @@
-from retry_requests import retry
 import openmeteo_requests
+import pytz
+import pandas as pd
+from datetime import datetime
+from retry_requests import retry
 from openmeteo_sdk.Variable import Variable
 from openmeteo_sdk.WeatherApiResponse import WeatherApiResponse
-import pandas as pd
-import numpy as np
-import pytz
-from datetime import datetime
+from utils.utils import identify_weather_zone
 
 
 class WeatherSnapshot:
@@ -19,10 +19,10 @@ class WeatherSnapshot:
 
 
 class WeatherConfig:
-    LOCATIONS = {
+    DEFAULT_LOCATIONS = {
         "TaiBei": [25.05, 121.54],
         "XinBei": [25.01, 121.46],
-        "Taoyuan": [24.98, 121.28],
+        "TaoYuan": [24.98, 121.28],
         "XinZhu": [24.81, 120.99],
         "MiaoLi": [24.57, 120.70],
         "TaiZhong": [24.14, 120.67],
@@ -43,7 +43,6 @@ class WeatherConfig:
         "wind_speed_10m",
         "wind_gusts_10m",
     ]
-
 
 class WeatherAPI:
 
@@ -72,7 +71,7 @@ class WeatherAPI:
         end_date: str | None = None,
         forecast_days: int | None = None,
     ):
-        self._locations = config.LOCATIONS
+        self._locations = config.DEFAULT_LOCATIONS
         self._fields = config.REQUESTED_FIELDS
         self._endpoint_url = url_endpoint
 
@@ -135,13 +134,19 @@ class WeatherAPI:
             )
             snapshot_dic[key] = i.ValuesAsNumpy()
 
+        snapshot_df = pd.DataFrame(snapshot_dic)
+
         # Add coordinates of the data collected
-        array_shape = hourly.Variables(0).ValuesAsNumpy().shape
-        snapshot_dic["lat"] = np.full(array_shape, snapshot.Latitude())
-        snapshot_dic["lng"] = np.full(array_shape, snapshot.Longitude())
+        snapshot_df["lat"] = snapshot.Latitude()
+        snapshot_df["lng"] = snapshot.Longitude()
+
+        # Identify Weather Zone
+        snapshot_df["zone"] = identify_weather_zone(
+            snapshot_df["lat"], snapshot_df["lng"]
+        )
 
         # Add time of extraction
-        snapshot_dic["datetime"] = (
+        snapshot_df["datetime"] = (
             pd.date_range(
                 start=pd.to_datetime(hourly.Time(), unit="s"),
                 end=pd.to_datetime(hourly.TimeEnd(), unit="s"),
@@ -155,9 +160,7 @@ class WeatherAPI:
         # Build WeatherSnapshot object
         tz_tst = pytz.timezone("Asia/Taipei")
         time_now = datetime.today().now(tz=tz_tst)
-        weather_object = WeatherSnapshot(
-            extraction_ts=time_now, body=pd.DataFrame(snapshot_dic)
-        )
+        weather_object = WeatherSnapshot(extraction_ts=time_now, body=snapshot_df)
         return weather_object
 
     def request_data(self) -> WeatherSnapshot:
