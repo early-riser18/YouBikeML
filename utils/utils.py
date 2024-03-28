@@ -6,7 +6,12 @@ def get_formatted_timestamp_as_str(ts: datetime) -> str:
     return f"{ts:%Y-%m-%d_%H:%M:%S}"
 
 def get_weather_zones() -> pd.DataFrame:
-    return pd.read_parquet("./tmp_data/weather_zones.parquet")
+    """Retrieve weather zones dims from s3 bucket"""
+    s3 = ConnectionToS3.from_env()
+    bucket = s3.resource.Bucket(s3.bucket_name)
+    key = "raw_data/weather/weather_zones.parquet"
+    s3_res = bucket.Object(key).get()
+    return pd.read_parquet(BytesIO(s3_res["Body"].read()))
 
 
 
