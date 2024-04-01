@@ -18,7 +18,7 @@ class TransliterationMapper(dict):
         super().__init__(dict_mapping)
         self.missing_key = missing_key
 
-    def __missing__(self):
+    def __missing__(self, key):
         return self.missing_key
 
 
