@@ -112,10 +112,9 @@ class FormatToFeaturesSchema(DataTransformer):
         super().__init__(exec_library)
 
     def in_pandas(self, df: pd.DataFrame):
+        df = df.set_index(keys=['id','extraction_ts']).sort_index()
         df = df[
             [
-                "id",
-                "extraction_ts",
                 "pct_full",
                 "month",
                 "day_of_week",
