@@ -189,12 +189,15 @@ if __name__ == "__main__":
     s3_connection = ConnectionToS3.from_env()
     download_from_bucket(
         s3_connection,
-        "tmp_data/raw_data/",
+        "tmp/raw_data/",
         "youbike_dock_info_2024-03-22_13:52:26_raw.parquet",
-        "./tmp_data",
+        "./",
     )
     df = pd.read_parquet(
-        "./tmp_data/raw_data/youbike_dock_info_2024-03-22_13:52:26_raw.parquet"
+        "./tmp/raw_data/historical_youbike_data_2024-03-18_raw.parquet"
     )
+    TIMEZONE = "Asia/Taipei"
+    df["last_update_ts"] = df["last_update_ts"].astype(f"datetime64[ms, {TIMEZONE}]")
+    df["extraction_ts"] = df["extraction_ts"].astype(f"datetime64[ms, {TIMEZONE}]")
 
     clean_youbike_data(df)

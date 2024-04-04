@@ -73,7 +73,7 @@ resource "aws_route_table" "public-route-table" {
   }
   route {
     cidr_block = "0.0.0.0/0"
-    gateway_id  = aws_internet_gateway.default.id
+    gateway_id = aws_internet_gateway.default.id
   }
 }
 
@@ -83,8 +83,8 @@ resource "aws_iam_role" "prefect_execution_role_stage" {
   assume_role_policy = jsonencode({
     Statement = [
       {
-        Action    = "sts:AssumeRole"
-        Effect    = "Allow"
+        Action = "sts:AssumeRole"
+        Effect = "Allow"
         Principal = {
           Service = "ecs-tasks.amazonaws.com"
         }
@@ -96,8 +96,8 @@ resource "aws_iam_role" "prefect_execution_role_stage" {
 }
 
 resource "aws_iam_role_policy" "logs_allow_create_log_group_stage" {
-  name   = "logs-allow-create-log-group-stage"
-  role   = aws_iam_role.prefect_execution_role_stage.id
+  name = "logs-allow-create-log-group-stage"
+  role = aws_iam_role.prefect_execution_role_stage.id
   policy = jsonencode({
     Statement = [
       {
@@ -116,8 +116,8 @@ resource "aws_iam_role" "prefect_task_role_stage" {
   assume_role_policy = jsonencode({
     Statement = [
       {
-        Action    = "sts:AssumeRole"
-        Effect    = "Allow"
+        Action = "sts:AssumeRole"
+        Effect = "Allow"
         Principal = {
           Service = "ecs-tasks.amazonaws.com"
         }
@@ -128,12 +128,12 @@ resource "aws_iam_role" "prefect_task_role_stage" {
 }
 
 resource "aws_iam_role_policy" "prefect_allow_ecs_task_stage" {
-  name   = "prefect-allow-ecs-task-stage"
-  role   = aws_iam_role.prefect_task_role_stage.id
+  name = "prefect-allow-ecs-task-stage"
+  role = aws_iam_role.prefect_task_role_stage.id
   policy = jsonencode({
     Statement = [
       {
-        Action   = [
+        Action = [
           "ec2:DescribeSubnets",
           "ec2:DescribeVpcs",
           "ecr:BatchCheckLayerAvailability",

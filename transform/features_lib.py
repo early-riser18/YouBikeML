@@ -59,7 +59,6 @@ class MakeWeatherFeatures(DataTransformer):
 
 class LagFeatures(DataTransformer):
     def in_pandas(self, df):
-        df.to_parquet("./tmp_data/features_debug_LagFeatures_at_input.parquet")
 
         df["30m_blag_pct_full"] = (
             df.sort_values(by="extraction_ts")
@@ -74,7 +73,6 @@ class LagFeatures(DataTransformer):
                 lambda x: x.rolling(window=12).mean()
             )  # Assumes each record is 10 mins
         )
-        df.to_parquet("./tmp_data/features_debug_LagFeatures_at_output.parquet")
 
         return df
 
@@ -112,7 +110,7 @@ class FormatToFeaturesSchema(DataTransformer):
         super().__init__(exec_library)
 
     def in_pandas(self, df: pd.DataFrame):
-        df = df.set_index(keys=['id','extraction_ts']).sort_index()
+        df = df.set_index(keys=["id", "extraction_ts"]).sort_index()
         df = df[
             [
                 "pct_full",
@@ -139,6 +137,7 @@ class ValidateFeaturesSchema(DataTransformer):
 
     def __init__(self, exec_library):
         super().__init__(exec_library)
+        ### PROBLEM WITH IT. DESPITE NOT HAVING first 2 COLUMNS, IT PASSES
         self.PREDICTION_FEATURES_SCHEMA = {
             "id": np.int64,
             "extraction_ts": pd.DatetimeTZDtype(unit="ms", tz="Asia/Taipei"),
@@ -228,8 +227,6 @@ class CreateInputPredictionFeatures(DataTransformer):
             on=["zone", "y_m_d_h"],
             how="left",
         )
-        main_df.to_parquet("./tmp_data/features_debug_input.parquet")
-
         return main_df
 
     def in_pyspark(self):

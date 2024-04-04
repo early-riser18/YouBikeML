@@ -33,7 +33,7 @@ class YoubikeForecastService:
         Main entrypoint to the object. Checks if DB has forecasts, otherwise creates new ones.
         Returns results serialized as JSON.
         """
-        # Check if station is in DB
+        #Check if station is in DB
         # For stations not in DB, make forecast
         fresh_forecast = self.__refresh_forecast(station_ids)
         return fresh_forecast.to_json()
@@ -62,9 +62,7 @@ if __name__ == "__main__":
         501216049,
         501210126,
         501209089,
-        508201041,
+        508201041
     ]
-
-   
     service = YoubikeForecastService.get_instance()
     print(service.get_forecast(test_station_ids))
