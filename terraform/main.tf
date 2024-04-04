@@ -184,5 +184,48 @@ resource "aws_iam_user_policy_attachment" "ecs_task_definition_attach" {
 resource "aws_ecr_repository" "prefect-flows" {
   name                 = "prefect-flows"
   image_tag_mutability = "MUTABLE"
-  
+
+}
+
+resource "aws_lambda_function" "get-youbike-forecast" {
+  function_name = "get-youbike-forecast"
+  role          = aws_iam_role.lambda-ml-model.arn
+  image_uri     = "211125707335.dkr.ecr.ap-northeast-1.amazonaws.com/prefect-flows:latest" #Needs to refactor to variable
+  image_config {
+    command     = ["predict.forecast_service.lambda_handler"]
+    entry_point = ["/usr/local/bin/python", "-m", "awslambdaric"]
+  }
+  memory_size = 500
+  ephemeral_storage {
+    size = 1000
+  }
+  timeout      = 60
+  package_type = "Image"
+  environment {
+    variables = {
+      "APP_ENV" : "stage",
+      "PREFECT_HOME" : "/tmp"
+    }
+  }
+}
+resource "aws_iam_role" "lambda-ml-model" {
+  name = "lambda-ml-model"
+  assume_role_policy = jsonencode({
+    Statement = [
+      {
+        Action = "sts:AssumeRole"
+        Effect = "Allow"
+        Principal = {
+          Service = "lambda.amazonaws.com"
+        }
+      },
+    ]
+    Version = "2012-10-17"
+  })
+  managed_policy_arns = ["arn:aws:iam::aws:policy/AmazonS3FullAccess", "arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole"]
+}
+
+resource "aws_lambda_function_url" "test_latest" {
+  function_name      = aws_lambda_function.get-youbike-forecast.function_name
+  authorization_type = "NONE"
 }

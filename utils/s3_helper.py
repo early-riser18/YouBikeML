@@ -14,17 +14,13 @@ class ConnectionToS3:
     def __init__(
         self,
         bucket_name: str,
-        aws_access_key_id: str,
-        aws_secret_access_key: str,
-        endpoint_url: str = None,
         region_name: str = "ap-northeast-1",
+        **kwargs
     ):
         self._resource = boto3.resource(
             "s3",
-            endpoint_url=endpoint_url,
             region_name=region_name,
-            aws_access_key_id=aws_access_key_id,
-            aws_secret_access_key=aws_secret_access_key,
+            **kwargs
         )
         self._bucket_name = bucket_name
 
@@ -35,16 +31,13 @@ class ConnectionToS3:
         if app_env == "local":
             return cls(
                 "local-youbike",
-                os.environ["MINIO_ACCESS_KEY_ID"],
-                os.environ["MINIO_SECRET_ACCESS_KEY"],
-                f'http://{os.environ["MINIO_HOST"]}:9000'
+                aws_access_key_id=os.environ["MINIO_ACCESS_KEY_ID"],
+                aws_secret_access_key=os.environ["MINIO_SECRET_ACCESS_KEY"],
+                endpoint_url=f'http://{os.environ["MINIO_HOST"]}:9000'
             )
         elif app_env == "stage":
             return cls(
-                "stage-youbike",
-                os.environ["AWS_ACCESS_KEY_ID"],
-                os.environ["AWS_SECRET_ACCESS_KEY"],
-            )
+                "stage-youbike")
         else:
             raise Exception(f"The argument env={app_env} is not valid.")
 

@@ -63,7 +63,7 @@ def get_latest_weather_data() -> pd.DataFrame:
     ]
     latest_report_key = sorted(weather_files_by_key, reverse=True)[0]
     report_local_path = download_from_bucket(
-        s3, latest_report_key, "./tmp_data", preserve_path=False
+        s3, latest_report_key, "/tmp" , preserve_path=False
     )
     return pd.read_parquet(report_local_path)
 
