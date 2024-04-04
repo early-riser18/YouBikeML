@@ -1,26 +1,18 @@
-from abc import ABC, abstractmethod, abstractproperty
+from abc import ABC, abstractmethod
 import pandas as pd
-from utils.s3_helper import ConnectionToS3, download_from_bucket
+from utils.s3_helper import ConnectionToS3
 from transform.features_creation import FeaturesCreator_v1
 from io import BytesIO
 import pickle
-import numpy as np
 from sklearn.linear_model import LinearRegression
-
-
-class StationForecast:
-    def __init__(self, id: int, occupancy_level: float, ts: pd.Timestamp) -> None:
-        self.id = id
-        self.occupancy_level = occupancy_level
-        self.ts = ts
 
 
 class YouBikeForecastModel(ABC):
 
     @abstractmethod
-    def forecast(station_ids: list[int]) -> list[StationForecast]:
+    def forecast(station_ids: list[int]) -> list:
         """
-        Ask feature creator for features per station id, make a forecast and create StationForecast Object
+        Ask feature creator for features per station id, make a forecast and create StationForecast Object (format TBD)
         """
         pass
 
