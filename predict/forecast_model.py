@@ -26,6 +26,7 @@ class RegressionYouBikeModel(YouBikeForecastModel):
         self.s3_connection = ConnectionToS3.from_env()
         self.features_creator = FeaturesCreator_v1()
         self.model = self.__get_model()
+        # COULD ADD A "NBR OF FUTURE PREDICTED TS as options. For now default is 1 - later should be 3H so 6"
 
     def __get_model(self) -> LinearRegression:
         """retrieve pickled model from s3 and deserialize it into a Python Object"""
@@ -45,14 +46,18 @@ class RegressionYouBikeModel(YouBikeForecastModel):
         prediction = self.model.predict(features)
         features.reset_index(inplace=True)
         forecast_df = features[["id", "pct_full", "extraction_ts"]].copy(deep=True)
+
+        # Custom Logic
         forecast_df["pct_full_pred_rel_change"] = prediction
         forecast_df["30m_fwd_pct_full"] = (
             forecast_df["pct_full"] + 1 + forecast_df["pct_full_pred_rel_change"]
         )
 
         # Clip to possible range
-        forecast_df["30m_fwd_pct_full"] = forecast_df["30m_fwd_pct_full"].clip(lower=0, upper=1)
-        
+        forecast_df["30m_fwd_pct_full"] = forecast_df["30m_fwd_pct_full"].clip(
+            lower=0, upper=1
+        )
+
         forecast_df["forecast_ts"] = (
             forecast_df["extraction_ts"] + pd.Timedelta(minutes=30)
         ).dt.round("min")
@@ -66,14 +71,19 @@ class RegressionYouBikeModel(YouBikeForecastModel):
         features_df = self.features_creator.make_prediction_features(station_ids)
         forecast_df = self.__make_forecast(features_df)
 
-        #### TBD IF OBJECT NEEDED
-        # forecast_objs = forecast_df.apply(
-        #     lambda x: StationForecast(
-        #         id=x["id"], occupancy_level=x["30m_fwd_pct_full"], ts=x["forecast_ts"]
-        #     ),
-        #     axis=1,
-        # ).tolist()
-        return forecast_df
+        t_0_records = features_df[["id", "pct_full", "extraction_ts"]].rename(
+            columns={"pct_full": "occupancy_lvl", "extraction_ts": "ts"}
+        )
+        t_0_records["relative_ts"] = 0
+
+        t_1_records = forecast_df.rename(columns={"30m_fwd_pct_full": "occupancy_lvl", "forecast_ts": "ts"})
+        t_1_records["relative_ts"] = 1
+
+        results = pd.concat(
+            [t_0_records, t_1_records]
+        ).reset_index(drop=True)
+
+        return results
 
 
 if __name__ == "__main__":
@@ -107,9 +117,6 @@ if __name__ == "__main__":
         508201024,
         508201026,
     ]
-    [
-        print(forecast.id, forecast.occupancy_level, forecast.ts)
-        for forecast in RegressionYouBikeModel().forecast(test_station_ids)
-    ]
-    # print(RegressionYouBikeModel().model)
 
+    print(RegressionYouBikeModel().forecast(test_station_ids))
+    # print(RegressionYouBikeModel().model)
