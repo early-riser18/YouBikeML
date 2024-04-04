@@ -18,6 +18,10 @@ class YouBikeForecastModel(ABC):
 
 
 class RegressionYouBikeModel(YouBikeForecastModel):
+    """
+    Object to make forecast about Youbikes using a Regression approach.
+    Features required for the model are declared in feature_creation
+    """
 
     def __init__(self):
         MODEL_PATH = "model/model_2024-03-29.pkl"
@@ -76,12 +80,12 @@ class RegressionYouBikeModel(YouBikeForecastModel):
         )
         t_0_records["relative_ts"] = 0
 
-        t_1_records = forecast_df.rename(columns={"30m_fwd_pct_full": "occupancy_lvl", "forecast_ts": "ts"})
+        t_1_records = forecast_df.rename(
+            columns={"30m_fwd_pct_full": "occupancy_lvl", "forecast_ts": "ts"}
+        )
         t_1_records["relative_ts"] = 1
 
-        results = pd.concat(
-            [t_0_records, t_1_records]
-        ).reset_index(drop=True)
+        results = pd.concat([t_0_records, t_1_records]).reset_index(drop=True)
 
         return results
 

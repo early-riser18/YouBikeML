@@ -14,6 +14,10 @@ import numpy as np
 
 
 class DataTransformer(ABC):
+    """Data transformation base class. Enables to run code with pandas or spark depending on the job size.
+    Implementations via both pandas and spark within one object allow to prevent error when implementing the
+    transformation in the other library.
+    """
 
     def __init__(self, exec_library):
         self._exec_library = exec_library

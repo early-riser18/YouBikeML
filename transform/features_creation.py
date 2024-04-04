@@ -23,7 +23,10 @@ class FeaturesCreator(ABC):
 
 
 class FeaturesCreator_v1(FeaturesCreator):
-
+    """
+    Object to create features for the model. 
+    Transformations are made via objects declared in transformation.feature_lib. 
+    """
     def __init__(self):
         self._model_name_version = "0.1"
         self._s3_connection = ConnectionToS3.from_env()
