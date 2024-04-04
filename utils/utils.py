@@ -4,10 +4,69 @@ from datetime import datetime
 from io import BytesIO
 from utils.s3_helper import ConnectionToS3, download_from_bucket
 
+STANDARD_TS_FORMAT = "%Y-%m-%d_%H:%M:%S"
+
 
 def get_formatted_timestamp_as_str(ts: datetime) -> str:
 
     return f"{ts:%Y-%m-%d_%H:%M:%S}"
+
+
+def get_youbike_snapshot_data_for_time_range(
+    oldest_ts: pd.Timestamp, newest_ts: pd.Timestamp
+) -> pd.DataFrame:
+    """Retrieve the snapshots for the range defined. For prediction, range is only last 120 minutes.
+    For training, since use pyspark, probably cannot use this method.
+    """
+    s3 = ConnectionToS3.from_env()
+    bucket = s3.resource.Bucket(s3.bucket_name)
+
+    snapshot_files_by_key = sorted(
+        [
+            obj.key
+            for obj in bucket.objects.filter(Prefix="clean_data/youbike_dock_info_2")
+        ],
+        reverse=True,
+    )
+
+    def find_file_index_by_ts(ts: str) -> int:
+        i = 0
+        while snapshot_files_by_key[i] > f"clean_data/youbike_dock_info_{ts}":
+            i += 1
+        return i
+
+    oldest_i = find_file_index_by_ts(oldest_ts.strftime(STANDARD_TS_FORMAT))
+    newest_i = find_file_index_by_ts(newest_ts.strftime(STANDARD_TS_FORMAT))
+
+    def read_parquet_from_s3(bucket, key):
+        """Generator function to yield a DataFrame from S3"""
+        s3_res = bucket.Object(key).get()
+        yield pd.read_parquet(BytesIO(s3_res["Body"].read()))
+
+    dfs = (
+        df
+        for key in snapshot_files_by_key[newest_i:oldest_i]
+        for df in read_parquet_from_s3(bucket, key)
+    )
+    hist_df = pd.concat(dfs, ignore_index=True)
+    return hist_df
+
+
+def get_latest_weather_data() -> pd.DataFrame:
+    s3 = ConnectionToS3.from_env()
+    bucket = s3.resource.Bucket(s3.bucket_name)
+    weather_files_by_key = [
+        obj.key
+        for obj in bucket.objects.filter(
+            Prefix="raw_data/weather/forecast_report/weather_forecast_report_"
+        )
+    ]
+    latest_report_key = sorted(weather_files_by_key, reverse=True)[0]
+    report_local_path = download_from_bucket(
+        s3, latest_report_key, "/tmp" , preserve_path=False
+    )
+    return pd.read_parquet(report_local_path)
+
 
 def get_weather_zones() -> pd.DataFrame:
     """Retrieve weather zones dims from s3 bucket"""
@@ -17,6 +76,17 @@ def get_weather_zones() -> pd.DataFrame:
     s3_res = bucket.Object(key).get()
     return pd.read_parquet(BytesIO(s3_res["Body"].read()))
 
+
+def get_weather_zones_to_stations() -> pd.DataFrame:
+    # TODO
+    # retrieve from DB
+    # check if DB has all. If DB has not, call util function to assign new station ID
+    # return weather zones for all
+    s3 = ConnectionToS3.from_env()
+    bucket = s3.resource.Bucket(s3.bucket_name)
+    key = "raw_data/weather/weather_zone_per_station.parquet"
+    s3_res = bucket.Object(key).get()
+    return pd.read_parquet(BytesIO(s3_res["Body"].read()))
 
 
 def np_magnitude(coord1: pd.DataFrame, coord2: pd.DataFrame):
@@ -42,4 +112,9 @@ def identify_weather_zone(lat: pd.Series, lng: pd.Series) -> pd.Series:
 
 
 if __name__ == "__main__":
-    print(get_formatted_timestamp_as_str(datetime.now()))
+    print(
+        get_youbike_snapshot_data_for_time_range(
+            oldest_ts=pd.Timestamp("2024-03-28-14:28"),
+            newest_ts=pd.Timestamp("2024-03-28-15:32"),
+        )
+    )
