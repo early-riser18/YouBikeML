@@ -1,6 +1,6 @@
-FROM --platform=linux/amd64  python:3.10.13-slim-bullseye as python3.10-prefect
+FROM python:3.10.13-slim-bullseye as python3.10-prefect
 COPY ./requirements.txt .
-RUN pip install -r requirements.txt
+RUN pip install --no-cache-dir -r requirements.txt
 
 FROM python3.10-prefect
 RUN pip install awslambdaric
