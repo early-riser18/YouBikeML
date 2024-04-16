@@ -162,7 +162,7 @@ def validate_output_schema(df: pd.DataFrame, schema: dict):
     return True
 
 
-@flow
+
 def clean_youbike_data(df: pd.DataFrame) -> pd.DataFrame:
     """
     Cleans raw youbike data and returns it.
