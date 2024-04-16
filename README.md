@@ -1,7 +1,7 @@
 # YouBike 🚲
 This project aims at improving the fleet rebalancing of YouBikes in Taiwan.
 Currently provides a tool to predict the number of bikes available at any YouBike station in Taiwan in the next three hours.
-**Try it out on**: Link TBD
+**Try it out on [Streamlit](https://smarter-youbike.streamlit.app/) now!**
 
 ## What is the problem?
 YouBike users who wish to get a bike to travel around the city are sometimes not able to find any bike at the station surrounding them. Therefore they have to rely on other methods of transportation, which might be more expensive, slower or less convenient. 
