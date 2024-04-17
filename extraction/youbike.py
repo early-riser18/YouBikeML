@@ -14,7 +14,7 @@ class YoubikeSnapshot:
         self.body = body
 
 
-@task(log_prints=True)
+
 def get_youbike_data() -> YoubikeSnapshot:
     """
     Returns the requested data from the youbike endpoint.
@@ -37,7 +37,7 @@ def get_youbike_data() -> YoubikeSnapshot:
     return data
 
 
-@task(log_prints=True)
+
 def basic_preprocessing(data: YoubikeSnapshot) -> YoubikeSnapshot:
     """
     Applies simple preprocessing.
@@ -64,7 +64,7 @@ def basic_preprocessing(data: YoubikeSnapshot) -> YoubikeSnapshot:
     return data
 
 
-@flow(log_prints=True)
+
 def extract_youbike_raw_data() -> YoubikeSnapshot:
     """
     Retrieve Youbike snapshot from endpoint, preprocess it and persist it.
