@@ -186,18 +186,21 @@ def clean_youbike_data(df: pd.DataFrame) -> pd.DataFrame:
 
 
 if __name__ == "__main__":
+    stub = "youbike_dock_info_2024-04-17_09:01:29"
     s3_connection = ConnectionToS3.from_env()
     download_from_bucket(
         s3_connection,
-        "tmp/raw_data/",
-        "youbike_dock_info_2024-03-22_13:52:26_raw.parquet",
-        "./",
+        f"raw_data/{stub}",
+        "./tmp/",
+       True
     )
     df = pd.read_parquet(
-        "./tmp/raw_data/historical_youbike_data_2024-03-18_raw.parquet"
+        f"./tmp/raw_data/{stub}_raw.parquet"
     )
+
     TIMEZONE = "Asia/Taipei"
     df["last_update_ts"] = df["last_update_ts"].astype(f"datetime64[ms, {TIMEZONE}]")
     df["extraction_ts"] = df["extraction_ts"].astype(f"datetime64[ms, {TIMEZONE}]")
 
-    clean_youbike_data(df)
+    clean_df = clean_youbike_data(df)
+    clean_df.to_parquet(f"./tmp/{stub}_clean.parquet")
