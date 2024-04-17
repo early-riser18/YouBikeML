@@ -195,11 +195,11 @@ resource "aws_lambda_function" "get-youbike-forecast" {
     command     = ["predict.forecast_service.lambda_handler"]
     entry_point = ["/usr/local/bin/python", "-m", "awslambdaric"]
   }
-  memory_size = 500
+  memory_size = 512
   ephemeral_storage {
     size = 1000
   }
-  timeout      = 60
+  timeout      = 90
   package_type = "Image"
   environment {
     variables = {
