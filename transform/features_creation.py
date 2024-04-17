@@ -48,7 +48,10 @@ class FeaturesCreator_v1(FeaturesCreator):
         main_df = main_df[main_df["extraction_ts"] == main_df["extraction_ts"].max()]
 
         #>>>>>>>> 
+        #TEMP HOTFIX see https://www.notion.so/justinwarambourg/Setup-new-Bike-Station-flow-4e592b533f9c48afa359c8b21fcc5228?pvs=4
+        main_df = main_df[~main_df["wind_speed"].isna()].copy(deep=True)
         #TEMP HOTFIX - See https://www.notion.so/justinwarambourg/Review-conditions-for-valid-Youbike-record-7173f198f387442da15185201da6551f?pvs=4
+        main_df.to_parquet("./tmp/features_debug_cp1.parquet")
         main_df = main_df[~main_df["pct_full"].isna()].copy(deep=True)
         #<<<<<<<<
         # Format and Validate to Schema
@@ -57,7 +60,7 @@ class FeaturesCreator_v1(FeaturesCreator):
         if is_schema_valid == False:
             raise TypeError("Schema Validation on prediction features output failed.")
         
-        main_df.to_parquet("./tmp_data/features_debug_output.parquet")
+        main_df.to_parquet("./tmp/features_debug_output.parquet")
         return main_df
 
     def make_training_features(
