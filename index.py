@@ -71,6 +71,8 @@ def get_forecast(stations_id: list[int]):
     url = "https://33iqhftc6fakzdlczkjsiikhtu0odrec.lambda-url.ap-northeast-1.on.aws/"
     payload = {"station_id": stations_id}
     res = requests.post(url, json=payload)
+    if res.status_code != 200:
+        res = requests.post(url, json=payload)
     return res.text
 
 
@@ -130,27 +132,32 @@ if clicked == 1:
     station_ids_filtered = base_youbike_df[base_youbike_df["city"] == selected_city][
         "id"
     ].unique()
-    print(station_ids_filtered.tolist())
-    raw_res = get_forecast(stations_id=station_ids_filtered.tolist())
+    print("Requested stations to forecast: ", station_ids_filtered.tolist())
+    try: 
+        raw_res = get_forecast(stations_id=station_ids_filtered.tolist())
 
-    forecast_raw = pd.DataFrame(json.loads(raw_res))
-    forecast = forecast_raw[forecast_raw["relative_ts"] == 0].copy(deep=True)
-    for i in forecast_raw["relative_ts"].unique()[1:]:
-        forecast = pd.merge(
-            left=forecast,
-            right=forecast_raw[forecast_raw["relative_ts"] == i][
-                ["id", "occupancy_lvl", "ts"]
-            ],
-            on="id",
-            suffixes=["", f"_t+{i}"],
+        forecast_raw = pd.DataFrame(json.loads(raw_res))
+        forecast = forecast_raw[forecast_raw["relative_ts"] == 0].copy(deep=True)
+        for i in forecast_raw["relative_ts"].unique()[1:]:
+            forecast = pd.merge(
+                left=forecast,
+                right=forecast_raw[forecast_raw["relative_ts"] == i][
+                    ["id", "occupancy_lvl", "ts"]
+                ],
+                on="id",
+                suffixes=["", f"_t+{i}"],
+            )
+
+        main_table = pd.merge(left=filtered_table, right=forecast, on="id")
+        c.write(
+            create_view(
+                main_table, youbike_table_prediction_schema, col_mapping, col_format
+            )
         )
 
-    main_table = pd.merge(left=filtered_table, right=forecast, on="id")
-    c.write(
-        create_view(
-            main_table, youbike_table_prediction_schema, col_mapping, col_format
-        )
-    )
+    except:
+        c.write("An error occured. Please try again later. 😔")
+        main_table = filtered_table
 else:
     main_table = filtered_table
     c.write(create_view(main_table, youbike_base_table_schema, col_mapping, col_format))
