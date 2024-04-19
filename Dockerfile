@@ -10,6 +10,7 @@ COPY ./flows ./flows
 COPY ./extraction ./extraction
 COPY ./transform ./transform
 COPY ./predict ./predict
+COPY ./db ./db
 
 ENV MINIO_ACCESS_KEY_ID=minio-local
 ENV MINIO_SECRET_ACCESS_KEY=minio-local

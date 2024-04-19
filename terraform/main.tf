@@ -14,6 +14,10 @@ terraform {
       source  = "hashicorp/aws"
       version = "~> 4.16"
     }
+    cockroach = {
+      source  = "cockroachdb/cockroach"
+      version = "1.4.1"
+    }
   }
   required_version = ">=1.2.0"
 
@@ -38,7 +42,9 @@ resource "aws_s3_bucket_public_access_block" "public_access_stage" {
   restrict_public_buckets = true
 }
 
-#AWS NETWORKING
+########################################################
+#                     AWS NETWORKING                   #
+########################################################
 resource "aws_vpc" "main" {
   cidr_block           = "10.0.0.0/24"
   instance_tenancy     = "default"
@@ -160,7 +166,9 @@ resource "aws_iam_role_policy" "prefect_allow_ecs_task_stage" {
   })
 }
 
-# ECS Cluster for Prefect 
+########################################################
+#                 ECS CLUSTER FOR PREFECT              #
+########################################################
 resource "aws_ecs_cluster" "prefect_cluster_stage" {
   name = "prefect-stage"
 }
@@ -186,7 +194,9 @@ resource "aws_ecr_repository" "prefect-flows" {
   image_tag_mutability = "MUTABLE"
 
 }
-
+########################################################
+#                  AWS LAMBDA FOR API                  #
+########################################################
 resource "aws_lambda_function" "get-youbike-forecast" {
   function_name = "get-youbike-forecast"
   role          = aws_iam_role.lambda-ml-model.arn
@@ -228,4 +238,28 @@ resource "aws_iam_role" "lambda-ml-model" {
 resource "aws_lambda_function_url" "test_latest" {
   function_name      = aws_lambda_function.get-youbike-forecast.function_name
   authorization_type = "NONE"
+}
+
+########################################################
+#                     CockroachDB                      #
+########################################################
+provider "cockroach" {
+        apikey = var.cockroachdb_api_key
+
+}
+resource "cockroach_cluster" "serverless" {
+  name           = "youbike"
+  cloud_provider = "AWS"
+
+  regions = [{
+    name = "ap-southeast-1"
+  }]
+  serverless = {
+    spend_limit = 1
+  }
+}
+resource "cockroach_sql_user" "cockroach" {
+  name       = "default"
+  password   = var.cockroachdb_sql_user_password
+  cluster_id = cockroach_cluster.serverless.id
 }
