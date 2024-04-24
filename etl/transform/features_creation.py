@@ -1,8 +1,8 @@
 import pandas as pd
 from abc import ABC, abstractmethod
 from utils.s3_helper import ConnectionToS3, download_from_bucket
-from extraction.youbike import extract_youbike_raw_data
-from transform.clean_youbike_data import clean_youbike_data
+from etl.extraction.youbike import extract_youbike_raw_data
+from etl.transform.clean_youbike_data import clean_youbike_data
 from . import features_lib
 
 
@@ -38,7 +38,7 @@ class FeaturesCreator_v1(FeaturesCreator):
     def make_prediction_features(self, station_ids: list[int]) -> pd.DataFrame:
         # Pull input data for features
         main_df = features_lib.CreateInputPredictionFeatures("pandas").run(station_ids)
-
+        main_df.to_parquet("./tmp/features_input.parquet")
         # Create features
         main_df = features_lib.StationOccupancyFeatures("pandas").run(main_df)
         main_df = features_lib.TimeFeatures("pandas").run(main_df)

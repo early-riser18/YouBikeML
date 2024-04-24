@@ -3,8 +3,8 @@ import pyspark.sql
 from typing import Union
 from abc import ABC, abstractmethod
 from pyspark.sql.functions import month, dayofweek, hour
-from extraction.youbike import extract_youbike_raw_data
-from transform.clean_youbike_data import clean_youbike_data
+from etl.extraction.youbike import extract_youbike_raw_data
+from etl.transform.clean_youbike_data import clean_youbike_data
 from utils.utils import (
     get_youbike_snapshot_data_for_time_range,
     get_weather_zones_to_stations,
@@ -179,6 +179,7 @@ class CreateInputPredictionFeatures(DataTransformer):
 
     def in_pandas(self, station_ids: list[int]):
         # Extract latest youbike snapshot
+        #TODO: GET Freshest current data from endpoint
         fresh_youbike_data_clean = clean_youbike_data(extract_youbike_raw_data().body)
 
         # pull last 120 mins snapshot for lag features

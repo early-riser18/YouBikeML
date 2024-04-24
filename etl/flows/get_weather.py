@@ -1,4 +1,4 @@
-from extraction.weather import WeatherAPI, WeatherConfig, WeatherSnapshot
+from etl.extraction.weather import WeatherAPI, WeatherConfig, WeatherSnapshot
 from prefect import flow, task
 from utils.utils import get_formatted_timestamp_as_str
 from utils.s3_helper import ConnectionToS3, export_file_to_s3

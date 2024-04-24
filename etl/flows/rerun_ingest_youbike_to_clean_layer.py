@@ -1,13 +1,13 @@
 from utils.utils import get_formatted_timestamp_as_str, STANDARD_TS_FORMAT
 from utils.s3_helper import ConnectionToS3, export_file_to_s3, download_from_bucket
-from extraction.youbike import extract_youbike_raw_data
-from transform.clean_youbike_data import clean_youbike_data
+from etl.extraction.youbike import extract_youbike_raw_data
+from etl.transform.clean_youbike_data import clean_youbike_data
 from prefect import flow
 from prefect.deployments import Deployment
 import pandas as pd
 from io import BytesIO
 
-
+@flow
 def rerun_ingest_youbike_to_clean_layer(
     oldest_ts: pd.Timestamp, newest_ts: pd.Timestamp
 ):
@@ -25,9 +25,9 @@ def rerun_ingest_youbike_to_clean_layer(
         reverse=False,
     )
     def find_file_index_by_ts(ts: str) -> int:
-        i = 0
-        while snapshot_files_by_key[i] < f"raw_data/youbike_dock_info_{ts}_raw.parquet":
-            i += 1
+        for i, key in enumerate(snapshot_files_by_key):
+            if key > f"raw_data/youbike_dock_info_{ts}_raw.parquet":
+                return i
         return i
 
     oldest_i = find_file_index_by_ts(oldest_ts.strftime(STANDARD_TS_FORMAT))
@@ -55,5 +55,5 @@ def rerun_ingest_youbike_to_clean_layer(
 
 if __name__ == "__main__":
     rerun_ingest_youbike_to_clean_layer(
-        pd.Timestamp("2024-04-03 15:00"), pd.Timestamp("2024-04-03 17:10")
+        pd.Timestamp("2024-04-23 10:30"), pd.Timestamp("2024-04-23 10:40")
     )

@@ -1,7 +1,7 @@
 from abc import ABC, abstractmethod
 import pandas as pd
 from utils.s3_helper import ConnectionToS3
-from transform.features_creation import FeaturesCreator_v1
+from etl.transform.features_creation import FeaturesCreator_v1
 from io import BytesIO
 import pickle
 from sklearn.linear_model import LinearRegression

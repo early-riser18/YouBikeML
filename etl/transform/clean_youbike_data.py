@@ -6,7 +6,7 @@ from utils.s3_helper import ConnectionToS3, download_from_bucket
 # from utils.s3_helper import ConnectionToS3, download_from_bucket
 from functools import reduce
 from datetime import date, timedelta
-from transform.youbike_mapping import YOUBIKE_AREA_MAPPING, YOUBIKE_CITY_MAPPING
+from etl.transform.youbike_mapping import YOUBIKE_AREA_MAPPING, YOUBIKE_CITY_MAPPING
 
 
 class InvalidRecs:
