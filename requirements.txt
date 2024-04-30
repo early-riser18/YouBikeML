@@ -1,4 +1,5 @@
 prefect~=2.16
+prefect_aws~=0.4
 requests
 pandas~=2.0.0
 pytz~=2024.0

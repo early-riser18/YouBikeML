@@ -202,7 +202,7 @@ resource "aws_lambda_function" "get-youbike-forecast" {
   role          = aws_iam_role.lambda-ml-model.arn
   image_uri     = "211125707335.dkr.ecr.ap-northeast-1.amazonaws.com/prefect-flows:latest" #Needs to refactor to variable
   image_config {
-    command     = ["predict.forecast_service.lambda_handler"]
+    command     = ["api.lambda_handler.lambda_handler"]
     entry_point = ["/usr/local/bin/python", "-m", "awslambdaric"]
   }
   memory_size = 512

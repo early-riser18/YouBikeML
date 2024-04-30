@@ -49,7 +49,7 @@ class RegressionYouBikeModel(YouBikeForecastModel):
 
         prediction = self.model.predict(features)
         features.reset_index(inplace=True)
-        forecast_df = features[["id", "pct_full", "extraction_ts"]].copy(deep=True)
+        forecast_df = features[["station_id", "pct_full", "extraction_ts"]].copy(deep=True)
 
         # Custom Logic
         forecast_df["pct_full_pred_rel_change"] = prediction
@@ -66,26 +66,27 @@ class RegressionYouBikeModel(YouBikeForecastModel):
             forecast_df["extraction_ts"] + pd.Timedelta(minutes=30)
         ).dt.round("min")
 
-        return forecast_df[["id", "30m_fwd_pct_full", "forecast_ts"]]
+
+        return forecast_df[["station_id", "30m_fwd_pct_full", "forecast_ts"]]
 
     def __train(self) -> None:
         pass
 
     def forecast(self, station_ids: list[int]) -> pd.DataFrame:
+        print("forecasting for ids: ", station_ids)
         features_df = self.features_creator.make_prediction_features(station_ids)
         forecast_df = self.__make_forecast(features_df)
 
-        t_0_records = features_df[["id", "pct_full", "extraction_ts"]].rename(
-            columns={"pct_full": "occupancy_lvl", "extraction_ts": "ts"}
-        )
+        t_0_records = features_df[["station_id", "pct_full"]].rename(columns={"pct_full": "fill_rate"})
         t_0_records["relative_ts"] = 0
-
-        t_1_records = forecast_df.rename(
-            columns={"30m_fwd_pct_full": "occupancy_lvl", "forecast_ts": "ts"}
-        )
+        
+        t_1_records = forecast_df.rename(columns={"30m_fwd_pct_full": "fill_rate",})
         t_1_records["relative_ts"] = 1
 
         results = pd.concat([t_0_records, t_1_records]).reset_index(drop=True)
+        results = pd.merge(results, features_df[['station_id', 'extraction_ts']], on="station_id", how='left')
+        results["run_ts"] = pd.Timestamp.now()
+        results = results.rename(columns={"extraction_ts": "base_ts" })
 
         return results
 
