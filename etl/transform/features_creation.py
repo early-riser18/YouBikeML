@@ -38,7 +38,6 @@ class FeaturesCreator_v1(FeaturesCreator):
     def make_prediction_features(self, station_ids: list[int]) -> pd.DataFrame:
         # Pull input data for features
         main_df = features_lib.CreateInputPredictionFeatures("pandas").run(station_ids)
-        main_df.to_parquet("./tmp/features_input.parquet")
         # Create features
         main_df = features_lib.StationOccupancyFeatures("pandas").run(main_df)
         main_df = features_lib.TimeFeatures("pandas").run(main_df)

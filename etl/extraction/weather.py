@@ -44,6 +44,7 @@ class WeatherConfig:
         "wind_gusts_10m",
     ]
 
+
 class WeatherAPI:
 
     @classmethod
@@ -107,16 +108,6 @@ class WeatherAPI:
         self._raw_response = responses
         return responses
 
-    def _consolidate_weather_snapshots(
-        self, snapshots: list[WeatherSnapshot]
-    ) -> WeatherSnapshot:
-        weather_dfs = [s.body for s in snapshots]
-        consolidated_body = pd.concat(weather_dfs, ignore_index=True)
-        consolidated_w_snapshot = WeatherSnapshot(
-            extraction_ts=snapshots[0].extraction_ts, body=consolidated_body
-        )
-        return consolidated_w_snapshot
-
     def _process_raw_snapshot(self, snapshot) -> WeatherSnapshot:
         """
         Constructs a WeatherSnapshot object from the API native response object WeatherApiResponse.
@@ -162,6 +153,16 @@ class WeatherAPI:
         time_now = datetime.today().now(tz=tz_tst)
         weather_object = WeatherSnapshot(extraction_ts=time_now, body=snapshot_df)
         return weather_object
+
+    def _consolidate_weather_snapshots(
+        self, snapshots: list[WeatherSnapshot]
+    ) -> WeatherSnapshot:
+        weather_dfs = [s.body for s in snapshots]
+        consolidated_body = pd.concat(weather_dfs, ignore_index=True)
+        consolidated_w_snapshot = WeatherSnapshot(
+            extraction_ts=snapshots[0].extraction_ts, body=consolidated_body
+        )
+        return consolidated_w_snapshot
 
     def request_data(self) -> WeatherSnapshot:
         """

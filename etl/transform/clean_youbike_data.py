@@ -81,14 +81,13 @@ def validate_data_schema(
     schema: dict,
     col_nbr: int,
 ) -> bool:
-    print("validation: ", df.shape)
     try:
         assert df.shape[1] == col_nbr
         for c in df.columns:
             assert df[c].dtype == schema[c]
-            print(f"{c} as {df[c].dtype}: OK")
 
-    except:
+    except Exception as e:
+        Warning(f"Validation Failed at {df[c]}: {e}")
         return False
     return True
 
@@ -152,24 +151,16 @@ def format_to_clean_schema(df: pd.DataFrame):
     return df
 
 
-def validate_output_schema(df: pd.DataFrame, schema: dict):
-    try:
-        assert df.shape[1] == 13
-        for c in df.columns:
-            assert df[c].dtype == schema[c]
-    except:
-        return False
-    return True
-
-
 
 def clean_youbike_data(df: pd.DataFrame) -> pd.DataFrame:
     """
     Cleans raw youbike data and returns it.
     """
+    print("clean_youbike_data: validating input...")
     if validate_data_schema(df, RAW_SCHEMA, 18) == False:
         print(df.head(10), df.info())
         raise AssertionError(f"Failed raw schema validation \n")
+    print("clean_youbike_data: input validated ")
 
     df = validate_values(df, non_nullable_cols)
     df = handle_duplicates(df)
@@ -179,9 +170,11 @@ def clean_youbike_data(df: pd.DataFrame) -> pd.DataFrame:
     df["area"] = df["area"].map(area_name_mapper)
     df = format_to_clean_schema(df)
 
+    print("clean_youbike_data: validating output...")
     if validate_data_schema(df, RAW_SCHEMA, 13) == False:
         print(df.head(10), df.info())
         raise AssertionError(f"Failed clean schema validation \n")
+    print("clean_youbike_data: output validated")
     return df
 
 
