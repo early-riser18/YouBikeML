@@ -7,7 +7,7 @@ from etl.extraction.youbike import extract_youbike_raw_data
 from etl.transform.clean_youbike_data import clean_youbike_data
 from utils.utils import (
     get_youbike_snapshot_data_for_time_range,
-    get_weather_zones_to_stations,
+    get_weather_zone,
     get_latest_weather_data,
 )
 import numpy as np
@@ -197,20 +197,27 @@ class CreateInputPredictionFeatures(DataTransformer):
             deep=True
         )
 
-        # Get weather zones
-        weather_zones = get_weather_zones_to_stations()
-        weather_zones.rename(columns={"weather_zone": "zone"}, inplace=True)
+        # merge weather zone and youbike
+        weather_zones = get_weather_zone()
+        weather_zones.rename(
+            columns={"name": "weather_zone", "id": "weather_zone_id"}, inplace=True
+        )
+        main_df = pd.merge(
+            left=concat_youbike,
+            right=weather_zones[["weather_zone_id", "weather_zone"]],
+            how="left",
+            on="weather_zone_id",
+        )
 
         # Get weather data
         weather_data = get_latest_weather_data()
+
         weather_data = MakeWeatherFeatures("pandas").run(weather_data)
-        weather_data.drop(["lat", "lng"], axis=1, inplace=True)
-
-        # merge weather zone and youbike
-        main_df = pd.merge(
-            left=concat_youbike, right=weather_zones, how="left", on="id"
+        weather_data = weather_data.drop(["lat", "lng"], axis=1).rename(
+            columns={"zone": "weather_zone"}
         )
-
+        main_df["extraction_ts"] = pd.to_datetime(main_df["extraction_ts"], utc=True)
+        print(main_df["extraction_ts"].dtype, main_df.info())
         main_df["y_m_d_h"] = main_df["extraction_ts"].dt.strftime("%Y-%m-%d_%H")
         weather_data["y_m_d_h"] = weather_data["datetime"].dt.strftime("%Y-%m-%d_%H")
 
