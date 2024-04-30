@@ -1,9 +1,0 @@
----
-stage:
-  env: stage
-  bucket: 
-
-local:
-  env: local
-  bucket:
-  raw: /raw_data
