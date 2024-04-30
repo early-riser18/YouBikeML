@@ -13,4 +13,7 @@ variable "org_name" {
   default = "early-riser18-perso"
 }
 
+
+variable "cockroachdb_sql_user_password" {}
 variable "prefect_api_key" {}
+variable "cockroachdb_api_key" {}

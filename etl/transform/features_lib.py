@@ -3,14 +3,15 @@ import pyspark.sql
 from typing import Union
 from abc import ABC, abstractmethod
 from pyspark.sql.functions import month, dayofweek, hour
-from extraction.youbike import extract_youbike_raw_data
-from transform.clean_youbike_data import clean_youbike_data
+from etl.extraction.youbike import extract_youbike_raw_data
+from etl.transform.clean_youbike_data import clean_youbike_data
 from utils.utils import (
     get_youbike_snapshot_data_for_time_range,
-    get_weather_zones_to_stations,
+    get_weather_zone,
     get_latest_weather_data,
 )
 import numpy as np
+from api import get_bike_station_status
 
 
 class DataTransformer(ABC):
@@ -66,13 +67,13 @@ class LagFeatures(DataTransformer):
 
         df["30m_blag_pct_full"] = (
             df.sort_values(by="extraction_ts")
-            .groupby(by=["id"])["pct_full"]
+            .groupby(by=["station_id"])["pct_full"]
             .transform(lambda x: x.shift(3))  # Assumes each record is 10 mins
         )
 
         df["120m_avg_pct_full"] = (
             df.sort_values(by="extraction_ts")
-            .groupby(by=["id"])["pct_full"]
+            .groupby(by=["station_id"])["pct_full"]
             .transform(
                 lambda x: x.rolling(window=12).mean()
             )  # Assumes each record is 10 mins
@@ -114,7 +115,7 @@ class FormatToFeaturesSchema(DataTransformer):
         super().__init__(exec_library)
 
     def in_pandas(self, df: pd.DataFrame):
-        df = df.set_index(keys=["id", "extraction_ts"]).sort_index()
+        df = df.set_index(keys=["station_id", "extraction_ts"]).sort_index()
         df = df[
             [
                 "pct_full",
@@ -143,7 +144,7 @@ class ValidateFeaturesSchema(DataTransformer):
         super().__init__(exec_library)
         ### PROBLEM WITH IT. DESPITE NOT HAVING first 2 COLUMNS, IT PASSES
         self.PREDICTION_FEATURES_SCHEMA = {
-            "id": np.int64,
+            "station_id": np.int64,
             "extraction_ts": pd.DatetimeTZDtype(unit="ms", tz="Asia/Taipei"),
             "pct_full": np.float64,
             "month": np.int32,
@@ -179,37 +180,55 @@ class CreateInputPredictionFeatures(DataTransformer):
 
     def in_pandas(self, station_ids: list[int]):
         # Extract latest youbike snapshot
-        fresh_youbike_data_clean = clean_youbike_data(extract_youbike_raw_data().body)
+        youbike_latest = get_bike_station_status.get_bike_station_status(
+            extended=True
+        ).rename(columns={"updated_at": "extraction_ts"})
 
         # pull last 120 mins snapshot for lag features
-        fresh_extraction_ts = fresh_youbike_data_clean["extraction_ts"][0]
+        fresh_extraction_ts = youbike_latest["extraction_ts"][0]
         historic_youbike_data = get_youbike_snapshot_data_for_time_range(
             oldest_ts=fresh_extraction_ts - pd.Timedelta(minutes=120),
             newest_ts=fresh_extraction_ts,
         )
 
-        concat_youbike = pd.concat(
-            [fresh_youbike_data_clean, historic_youbike_data], ignore_index=True
-        )
-        # Keep requested stations only
-        concat_youbike = concat_youbike[concat_youbike["id"].isin(station_ids)].copy(
-            deep=True
+        historic_youbike_data = pd.merge(
+            left=historic_youbike_data,
+            right=youbike_latest[["id", "weather_zone_id"]],
+            on="id",
         )
 
-        # Get weather zones
-        weather_zones = get_weather_zones_to_stations()
-        weather_zones.rename(columns={"weather_zone": "zone"}, inplace=True)
+        concat_youbike = pd.concat(
+            [youbike_latest, historic_youbike_data], ignore_index=True
+        )
+
+        # Keep requested stations only
+        concat_youbike = (
+            concat_youbike[concat_youbike["id"].isin(station_ids)]
+            .copy(deep=True)
+            .rename(columns={"id": "station_id"})
+        )
+
+        # merge weather zone and youbike
+        weather_zones = get_weather_zone()
+        weather_zones.rename(
+            columns={"name": "weather_zone", "id": "weather_zone_id"}, inplace=True
+        )
+        main_df = pd.merge(
+            left=concat_youbike,
+            right=weather_zones[["weather_zone_id", "weather_zone"]],
+            how="left",
+            on="weather_zone_id",
+        )
 
         # Get weather data
         weather_data = get_latest_weather_data()
+
         weather_data = MakeWeatherFeatures("pandas").run(weather_data)
-        weather_data.drop(["lat", "lng"], axis=1, inplace=True)
-
-        # merge weather zone and youbike
-        main_df = pd.merge(
-            left=concat_youbike, right=weather_zones, how="left", on="id"
+        weather_data = weather_data.drop(["lat", "lng"], axis=1).rename(
+            columns={"zone": "weather_zone"}
         )
-
+        main_df["extraction_ts"] = pd.to_datetime(main_df["extraction_ts"], utc=True)
+        print(main_df["extraction_ts"].dtype, main_df.info())
         main_df["y_m_d_h"] = main_df["extraction_ts"].dt.strftime("%Y-%m-%d_%H")
         weather_data["y_m_d_h"] = weather_data["datetime"].dt.strftime("%Y-%m-%d_%H")
 
@@ -223,12 +242,12 @@ class CreateInputPredictionFeatures(DataTransformer):
                     "precipitation",
                     "wind_speed",
                     "y_m_d_h",
-                    "zone",
+                    "weather_zone",
                     "1h_fwd_precipitation",
                     "1h_fwd_apparent_temperature",
                 ]
             ],
-            on=["zone", "y_m_d_h"],
+            on=["weather_zone", "y_m_d_h"],
             how="left",
         )
         return main_df

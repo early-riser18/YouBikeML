@@ -2,9 +2,13 @@ import numpy as np
 import pandas as pd
 from datetime import datetime
 from io import BytesIO
-from utils.s3_helper import ConnectionToS3, download_from_bucket
+from utils.s3_helper import ConnectionToS3, download_from_bucket, export_file_to_s3
+import os
+from utils.sql_utils import DB_Connection
+from sqlalchemy import text
 
 STANDARD_TS_FORMAT = "%Y-%m-%d_%H:%M:%S"
+DB_TS_FORMAT = "%Y-%m-%d %H:%M:%S"
 
 
 def get_formatted_timestamp_as_str(ts: datetime) -> str:
@@ -63,30 +67,17 @@ def get_latest_weather_data() -> pd.DataFrame:
     ]
     latest_report_key = sorted(weather_files_by_key, reverse=True)[0]
     report_local_path = download_from_bucket(
-        s3, latest_report_key, "/tmp" , preserve_path=False
+        s3, latest_report_key, "/tmp", preserve_path=False
     )
     return pd.read_parquet(report_local_path)
 
 
-def get_weather_zones() -> pd.DataFrame:
-    """Retrieve weather zones dims from s3 bucket"""
-    s3 = ConnectionToS3.from_env()
-    bucket = s3.resource.Bucket(s3.bucket_name)
-    key = "raw_data/weather/weather_zones.parquet"
-    s3_res = bucket.Object(key).get()
-    return pd.read_parquet(BytesIO(s3_res["Body"].read()))
-
-
-def get_weather_zones_to_stations() -> pd.DataFrame:
-    # TODO
-    # retrieve from DB
-    # check if DB has all. If DB has not, call util function to assign new station ID
-    # return weather zones for all
-    s3 = ConnectionToS3.from_env()
-    bucket = s3.resource.Bucket(s3.bucket_name)
-    key = "raw_data/weather/weather_zone_per_station.parquet"
-    s3_res = bucket.Object(key).get()
-    return pd.read_parquet(BytesIO(s3_res["Body"].read()))
+def get_weather_zone() -> pd.DataFrame:
+    """Retrieve weather zones dims from db's weather_zone"""
+    with DB_Connection.from_env().connection as conn:
+        cursor_result = conn.execute(text("SELECT * FROM weather_zone;"))
+        weather_zone_df = pd.DataFrame(cursor_result.all())
+    return weather_zone_df
 
 
 def np_magnitude(coord1: pd.DataFrame, coord2: pd.DataFrame):
@@ -99,7 +90,7 @@ def identify_weather_zone(lat: pd.Series, lng: pd.Series) -> pd.Series:
     """
     Provided a dataframe with column lat and column lng, identify what the closest weather zone is.
     """
-    weather_zones = get_weather_zones()
+    weather_zones = get_weather_zone()
 
     mag = pd.DataFrame({"lat": lat, "lng": lng}).loc[:]
 
@@ -111,10 +102,40 @@ def identify_weather_zone(lat: pd.Series, lng: pd.Series) -> pd.Series:
     return mag.drop(["lat", "lng"], axis=1).idxmin(axis=1)
 
 
-if __name__ == "__main__":
-    print(
-        get_youbike_snapshot_data_for_time_range(
-            oldest_ts=pd.Timestamp("2024-03-28-14:28"),
-            newest_ts=pd.Timestamp("2024-03-28-15:32"),
-        )
+def sync_local_from_stage(filter: str, limit: int = 9999):
+    if limit < 1:
+        raise ValueError("Limit must be a non null integer")
+
+    curr_env = os.environ["APP_ENV"]
+    os.environ["APP_ENV"] = "local"
+    local_co = ConnectionToS3.from_env()
+    os.environ["APP_ENV"] = "stage"
+    stage_co = ConnectionToS3.from_env()
+    os.environ["APP_ENV"] = curr_env
+
+    key_to_dl = sorted(
+        [obj.key for obj in stage_co.Bucket.objects.filter(Prefix=filter)],
+        reverse=True,
     )
+
+    # download and upload
+    for key in key_to_dl[:limit]:
+        res = stage_co.Bucket.Object(key).get()
+        export_file_to_s3(local_co, key, res["Body"].read())
+        print(f"uploaded {key} at {local_co.bucket_name}")
+
+
+if __name__ == "__main__":
+    import sys
+
+    # print(
+    #     get_youbike_snapshot_data_for_time_range(
+    #         oldest_ts=pd.Timestamp("2024-03-28-14:28"),
+    #         newest_ts=pd.Timestamp("2024-03-28-15:32"),
+    #     )
+    # )
+    # print(get_weather_zones())
+    print(sys.argv[1])
+    if sys.argv[1] is None:
+        raise UserWarning("Please provide a stub")
+    sync_local_from_stage(sys.argv[1], limit=100)

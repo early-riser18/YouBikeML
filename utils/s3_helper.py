@@ -23,6 +23,7 @@ class ConnectionToS3:
             **kwargs
         )
         self._bucket_name = bucket_name
+        self.Bucket = self.resource.Bucket(self._bucket_name)
 
     @classmethod
     def from_env(cls):
@@ -48,6 +49,8 @@ class ConnectionToS3:
     @property
     def bucket_name(self):
         return self._bucket_name
+    
+
 
 
 def export_file_to_s3(connection: ConnectionToS3, file_name: str, body=None) -> str:
