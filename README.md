@@ -86,17 +86,11 @@ You can test the main functionalities by running the following scripts:
 
 Make sure to set `APP_ENV=local` 
 ## Container
-This service is run in the cloud in a container. You can test run a container locally as follows:
+This service is run in the cloud in a container. You can test the containerized environment by running `./utils/docker_script.sh` and select the option accordingly:
 
-# Running Extraction tasks manually
-## Locally
-A local S3 bucket is available via MinIO.
-1. Spin up a local MinIO instance with `docker-compose up minio-server`
-3. Run any extraction flow via `python3 -m elt.flows.\<flow-name>
-4. Inspect the extracted data on `http://localhost:9001` using the credentials set in the `compose.yaml` file
-## Cloud Environment
-1. Go to your Prefect Server > Deployments 
-2. Select Quick Run on any deployment of interest. 
-3. Inspect the extracted data on your S3 bucket.
+`1) Test Locally`: Build image and run code in a containarized local environment
+<br>`2) Test Lambda`: Build image and launch a local lambda function emulator. You can then make calls to it with `curl "http://localhost...` to simulate the cloud lamdbda function behavior. 
+
 
 # Train & Test Forecast Model
+Coming soon...
