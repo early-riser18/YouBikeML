@@ -15,13 +15,16 @@ services:
     command: minio server /data
     networks:
       - network1
-  # youbike-extraction:
-  #   image: test-prefect:0.1
-  #   environment:
-  #     - MINIO_HOST=minio-server
-  #     - FLOW_NAME
-  #   networks:
-  #     - default-bridge
+  backend:
+    image: prefect-flows:latest-local
+    environment:
+      - MINIO_HOST=minio-server
+      - MINIO_ACCESS_KEY_ID=minio-local
+      - MINIO_SECRET_ACCESS_KEY=minio-local
+      - APP_ENV=local
+    command: bash
+    networks:
+      - network1
 
 networks:
   network1:

@@ -102,29 +102,6 @@ def identify_weather_zone(lat: pd.Series, lng: pd.Series) -> pd.Series:
     return mag.drop(["lat", "lng"], axis=1).idxmin(axis=1)
 
 
-def sync_local_from_stage(filter: str, limit: int = 9999):
-    if limit < 1:
-        raise ValueError("Limit must be a non null integer")
-
-    curr_env = os.environ["APP_ENV"]
-    os.environ["APP_ENV"] = "local"
-    local_co = ConnectionToS3.from_env()
-    os.environ["APP_ENV"] = "stage"
-    stage_co = ConnectionToS3.from_env()
-    os.environ["APP_ENV"] = curr_env
-
-    key_to_dl = sorted(
-        [obj.key for obj in stage_co.Bucket.objects.filter(Prefix=filter)],
-        reverse=True,
-    )
-
-    # download and upload
-    for key in key_to_dl[:limit]:
-        res = stage_co.Bucket.Object(key).get()
-        export_file_to_s3(local_co, key, res["Body"].read())
-        print(f"uploaded {key} at {local_co.bucket_name}")
-
-
 if __name__ == "__main__":
     import sys
 
@@ -134,8 +111,3 @@ if __name__ == "__main__":
     #         newest_ts=pd.Timestamp("2024-03-28-15:32"),
     #     )
     # )
-    # print(get_weather_zones())
-    print(sys.argv[1])
-    if sys.argv[1] is None:
-        raise UserWarning("Please provide a stub")
-    sync_local_from_stage(sys.argv[1], limit=100)

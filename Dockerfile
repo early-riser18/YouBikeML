@@ -12,11 +12,8 @@ COPY ./etl/flows ./flows
 COPY ./api ./api 
 COPY ./predict ./predict 
 
-ENV MINIO_ACCESS_KEY_ID=minio-local
-ENV MINIO_SECRET_ACCESS_KEY=minio-local
-ENV MINIO_HOST=minio-server
 ENV PREFECT_LOGGING_LEVEL=DEBUG
 ENV DATABASE_URL="cockroachdb://default:PFdaW6lkaehksaBj3@youbike-6585.6xw.aws-ap-southeast-1.cockroachlabs.cloud:26257/defaultdb"
 ENV TZ="Asia/Taipei"
-ENV APP_ENV=stage
+
 CMD BASH
