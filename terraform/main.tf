@@ -200,7 +200,7 @@ resource "aws_ecr_repository" "prefect-flows" {
 resource "aws_lambda_function" "get-youbike-forecast" {
   function_name = "get-youbike-forecast"
   role          = aws_iam_role.lambda-ml-model.arn
-  image_uri     = "211125707335.dkr.ecr.ap-northeast-1.amazonaws.com/prefect-flows:latest" #Needs to refactor to variable
+  image_uri     = ecr_image_uri
   image_config {
     command     = ["api.lambda_handler.lambda_handler"]
     entry_point = ["/usr/local/bin/python", "-m", "awslambdaric"]

@@ -13,6 +13,10 @@ variable "org_name" {
   default = "early-riser18-perso"
 }
 
+variable "ecr_image_uri" {
+  type= string
+  default = "211125707335.dkr.ecr.ap-northeast-1.amazonaws.com/prefect-flows:latest"
+}
 
 variable "cockroachdb_sql_user_password" {}
 variable "prefect_api_key" {}
