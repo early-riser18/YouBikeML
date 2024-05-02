@@ -16,7 +16,7 @@ terraform {
     }
     cockroach = {
       source  = "cockroachdb/cockroach"
-      version = "1.4.1"
+      version = "1.5.0"
     }
   }
   required_version = ">=1.2.0"
@@ -51,7 +51,7 @@ resource "aws_vpc" "main" {
   enable_dns_support   = true
   enable_dns_hostnames = true
   tags = {
-    Name = "vpc-stage "
+    Name = "vpc-stage"
   }
 }
 resource "aws_subnet" "prefect_ecs_public_subnet" {
@@ -244,7 +244,7 @@ resource "aws_lambda_function_url" "test_latest" {
 #                     CockroachDB                      #
 ########################################################
 provider "cockroach" {
-        apikey = var.cockroachdb_api_key
+  apikey = var.cockroachdb_api_key
 
 }
 resource "cockroach_cluster" "serverless" {
