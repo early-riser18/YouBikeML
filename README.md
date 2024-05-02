@@ -47,6 +47,12 @@ Ensure you have [Terraform](https://developer.hashicorp.com/terraform/tutorials/
 terraform -v 
 docker run hello-world
 ```
+Make sure to set the following three variables in `terraform.variables.tf`
+```tf
+variable "cockroachdb_sql_user_password" {}
+variable "prefect_api_key" {}
+variable "cockroachdb_api_key" {}
+```
 
 ## Local set up
 ### Set up your environment
