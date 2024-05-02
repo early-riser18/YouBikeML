@@ -26,7 +26,7 @@ Note: More station ids can be found by querying the other available service.
 ```bash
 curl "https://33iqhftc6fakzdlczkjsiikhtu0odrec.lambda-url.ap-northeast-1.on.aws/" -H 'content-type: application/json' -d '{"service": "bike_station_status", "extended": 1}'
 ```
-
+*Note: The API call may fail on the first try due to the lambda cold start. If so, just try again once.* 
 ## Training the model
 The model is retrained periodically based on the latest historical data. 
 
