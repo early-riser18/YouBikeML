@@ -45,7 +45,7 @@ COPY ./docker/spark/requirements.txt .
 RUN pip3 install --upgrade pip
 RUN pip3 install -r requirements.txt 
 ENV PYSPARK_PYTHON python3
-ENV PYTHONPATH=$SPARK_HOME/python/:$PYTHONPATH
+ENV PYTHONPATH=$SPARK_HOME/python/:$PYTHONPATH:$SPARK_HOME/app
 
 FROM spark-base as build1
 WORKDIR $SPARK_HOME
