@@ -73,3 +73,15 @@ def db_update_bike_station(df: pd.DataFrame) -> None:
         with sql_utils.DB_Connection.from_env().connection as conn:
             conn.execute(text(sql_insert))
             conn.commit()
+
+
+def get_all_valid_stations_id() -> list[int]:
+    """Returns a list with all station ids present in the db.bike_station table. Currently no validity filter is checked."""
+    sql_text = 'SELECT "id" FROM bike_station;'
+    with sql_utils.DB_Connection.from_env().connection as conn:
+        res = conn.execute(text(sql_text))
+        return [r[0] for r in res.all()]
+
+
+if __name__ == "__main__":
+    print(get_all_valid_stations_id())
