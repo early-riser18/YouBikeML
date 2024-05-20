@@ -12,8 +12,6 @@ services:
       MINIO_ADDRESS: ':9000'
       MINIO_CONSOLE_ADDRESS: ':9001'
     command: minio server /data
-    networks:
-      - network1
 
   backend:
     build:
@@ -25,8 +23,6 @@ services:
     environment:
       - MINIO_HOST=minio-server
     command: bash
-    networks:
-      - network1
 
   spark-master:
     container_name: da-spark-master
@@ -35,8 +31,6 @@ services:
       dockerfile: ./docker/spark/Dockerfile
     image: da-spark-image
     entrypoint: [ "/opt/spark/entrypoint.sh", "master" ]
-    depends_on:
-      - minio-server
     healthcheck:
       test: [ "CMD", "curl", "-f", "http://localhost:8080" ]
       interval: 5s
@@ -44,6 +38,7 @@ services:
       retries: 3
     volumes:
       - spark-logs:/opt/spark/spark-events
+      - ../:/opt/spark/app
     env_file:
       - ./spark/.env.spark
       - ../.env
@@ -53,9 +48,6 @@ services:
     ports:
       - '8080:8080'
       - '7077:7077'
-
-    networks:
-      - network1
 
   spark-history-server:
     container_name: da-spark-history
@@ -71,10 +63,9 @@ services:
       - MINIO_HOST=minio-server
     volumes:
       - spark-logs:/opt/spark/spark-events
+      - ../:/opt/spark/app
     ports:
       - '18080:18080'
-    networks:
-      - network1
 
   spark-worker:
     image: da-spark-image
@@ -89,15 +80,12 @@ services:
       - MINIO_HOST=minio-server
     volumes:
       - spark-logs:/opt/spark/spark-events
-    networks:
-      - network1
+      - ../:/opt/spark/app
 
   gateway:
     build:
       context: ../ 
       dockerfile: ./docker/spark/Dockerfile
-    depends_on:
-      - spark-master
     entrypoint: [ "/opt/spark/entrypoint.sh", "gateway" ]
     env_file:
       - ./spark/.env.spark
@@ -105,14 +93,11 @@ services:
     environment:
       - APP_ENV=${APP_ENV}
       - MINIO_HOST=minio-server
-    networks:
-      - network1
+    volumes:
+    - spark-logs:/opt/spark/spark-events
+    - ../:/opt/spark/app
 
 volumes:
   spark-logs:
 
 
-networks:
-  network1:
-    name: youbike
-    external: true
