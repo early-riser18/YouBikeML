@@ -1,0 +1,103 @@
+services:
+  minio-server:
+    image: quay.io/minio/minio:RELEASE.2022-05-04T07-45-27Z
+    volumes:
+      - ./minio/data:/data
+    ports:
+      - "9000:9000"
+      - "9001:9001"
+    environment:
+      MINIO_ROOT_USER: 'minio-local'
+      MINIO_ROOT_PASSWORD: 'minio-local'
+      MINIO_ADDRESS: ':9000'
+      MINIO_CONSOLE_ADDRESS: ':9001'
+    command: minio server /data
+
+  backend:
+    build:
+      context: ../
+      dockerfile: ./docker/backend/Dockerfile
+    image: prefect-flows:latest-local
+    env_file:
+      - ../.env
+    environment:
+      - MINIO_HOST=minio-server
+    command: bash
+
+  spark-master:
+    container_name: da-spark-master
+    build:
+      context: ../
+      dockerfile: ./docker/spark/Dockerfile
+    image: da-spark-image
+    entrypoint: [ "/opt/spark/entrypoint.sh", "master" ]
+    healthcheck:
+      test: [ "CMD", "curl", "-f", "http://localhost:8080" ]
+      interval: 5s
+      timeout: 3s
+      retries: 3
+    volumes:
+      - spark-logs:/opt/spark/spark-events
+      - ../:/opt/spark/app
+    env_file:
+      - ./spark/.env.spark
+      - ../.env
+    environment:
+      - APP_ENV=${APP_ENV}
+      - MINIO_HOST=minio-server
+    ports:
+      - '8080:8080'
+      - '7077:7077'
+
+  spark-history-server:
+    container_name: da-spark-history
+    image: da-spark-image
+    entrypoint: [ "/opt/spark/entrypoint.sh", "history" ]
+    depends_on:
+      - spark-master
+    env_file:
+      - ./spark/.env.spark
+      - ../.env
+    environment:
+      - APP_ENV=${APP_ENV}
+      - MINIO_HOST=minio-server
+    volumes:
+      - spark-logs:/opt/spark/spark-events
+      - ../:/opt/spark/app
+    ports:
+      - '18080:18080'
+
+  spark-worker:
+    image: da-spark-image
+    entrypoint: [ "/opt/spark/entrypoint.sh", "worker" ]
+    depends_on:
+      - spark-master
+    env_file:
+      - ./spark/.env.spark
+      - ../.env
+    environment:
+      - APP_ENV=${APP_ENV}
+      - MINIO_HOST=minio-server
+    volumes:
+      - spark-logs:/opt/spark/spark-events
+      - ../:/opt/spark/app
+
+  gateway:
+    build:
+      context: ../ 
+      dockerfile: ./docker/spark/Dockerfile
+    entrypoint: [ "/opt/spark/entrypoint.sh", "gateway" ]
+    env_file:
+      - ./spark/.env.spark
+      - ../.env
+    environment:
+      - APP_ENV=${APP_ENV}
+      - MINIO_HOST=minio-server
+    volumes:
+    - spark-logs:/opt/spark/spark-events
+    - ../:/opt/spark/app
+
+volumes:
+  spark-logs:
+
+

@@ -92,11 +92,25 @@ You can test the main functionalities by running the following scripts:
 
 Make sure to set `APP_ENV=local` 
 ## Container
-This service is run in the cloud in a container. You can test the containerized environment by running `./utils/docker_script.sh` and select the option accordingly:
+This service is run in the cloud in a container and you can test the containerized environment locally.
+Build all Docker resources by running once `docker compose -f ./docker/compose.yaml build`
+ 
+Then you can test the containerized env by running `./docker/docker_script.sh` and select the option accordingly:
 
 `1) Test Locally`: Build image and run code in a containarized local environment
 <br>`2) Test Lambda`: Build image and launch a local lambda function emulator. You can then make calls to it with `curl "http://localhost...` to simulate the cloud lamdbda function behavior. 
-
+```bash
+curl "http://localhost:9999/2015-03-31/functions/function/invocations" -H 'content-type: application/json' -d '{"body": "{\"service\": \"fill_rate_forecast\", \"station_id\": [508201032, 501208101]}"}'
+```
+Note: More station ids can be found by querying the other available service.
+```bash
+curl "http://localhost:9999/2015-03-31/functions/function/invocations" -H 'content-type: application/json' -d '{"body": "{\"service\": \"bike_station_status\", \"extended\": 1}"}'
+```
 
 # Train & Test Forecast Model
-Coming soon...
+You can train the model locally on a Spark Cluster with multiple worker nodes. To do so, simply run the following command.
+```bash
+cd docker/
+make run-stage
+```
+This command will launch a local Spark Cluster with three worker nodes, and register a Spark Job as specified by the entrypoint of the Docker Service "gateway". This job will retrain the model on all existing snapshot data found on s3://stage-youbike/clean-data/.
