@@ -15,5 +15,5 @@ then
     start-history-server.sh
 elif [ "$SPARK_WORKLOAD" == "gateway" ];
 then
-    spark-submit --master spark://spark-master:7077 --deploy-mode client /opt/spark/retrain_model.py /opt/spark/jars/hadoop-aws-3.3.4.jar /opt/spark/jars/aws-java-sdk-bundle-1.12.262.jar
+    spark-submit --master spark://spark-master:7077 --deploy-mode client /opt/spark/app/predict/retrain_model.py /opt/spark/jars/hadoop-aws-3.3.4.jar /opt/spark/jars/aws-java-sdk-bundle-1.12.262.jar
 fi
