@@ -1,5 +1,5 @@
 ### WARNING: Dockerfile expect the build context to be the repo's root directory
-FROM python:3.11-bullseye as spark-base
+FROM python:3.10-bullseye as spark-base
 ARG SPARK_VERSION=3.3.4
 
 RUN apt-get update && \
@@ -42,13 +42,15 @@ RUN chmod u+x /opt/spark/sbin/* && \
     
 ## Set up python dependencies 
 COPY ./docker/spark/requirements.txt .
-RUN pip3 install -r requirements.txt
+RUN pip3 install --upgrade pip
+RUN pip3 install -r requirements.txt 
 ENV PYSPARK_PYTHON python3
 ENV PYTHONPATH=$SPARK_HOME/python/:$PYTHONPATH
 
 FROM spark-base as build1
 WORKDIR $SPARK_HOME
 COPY ./docker/spark/entrypoint.sh .
+
+
 RUN ["chmod", "a+x", "./entrypoint.sh"]
-COPY ./retrain_model.py .
 ENTRYPOINT [ "./entrypoint.sh" ]
