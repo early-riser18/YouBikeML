@@ -7,6 +7,7 @@ from sqlalchemy import text
 import json
 from datetime import datetime, timedelta
 from typing import Union
+from etl.transform.features_creator import FeaturesCreator_v1
 
 class YoubikeForecastService:
     """Service responsible for providing and maintaining a time-valid forecast.
@@ -30,7 +31,7 @@ class YoubikeForecastService:
     def get_instance(cls, freshness_thresh: int = None):
         if cls._unique_instance is None:
             cls._unique_instance = cls(
-                RegressionYouBikeModel(), ConnectionToS3.from_env(), freshness_thresh
+                RegressionYouBikeModel("model_2024-03-29", FeaturesCreator_v1), ConnectionToS3.from_env(), freshness_thresh
             )
         return cls._unique_instance
 
