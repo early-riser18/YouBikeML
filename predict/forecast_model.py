@@ -88,7 +88,6 @@ class RegressionYouBikeModel(ForecastModel):
     def forecast(self, station_ids: list[int]) -> pd.DataFrame:
         print("forecasting for ids: ", station_ids)
         features_df = self.features_creator.make_prediction_features(station_ids)
-        features_df.to_parquet("./tmp/features_df.parquet")
         forecast_df = self.__make_forecast(features_df)
 
         t_0_records = features_df[["station_id", "pct_full"]].rename(
