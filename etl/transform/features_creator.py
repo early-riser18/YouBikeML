@@ -54,6 +54,9 @@ class FeaturesCreator_v1(FeaturesCreator):
         # TEMP HOTFIX - See https://www.notion.so/justinwarambourg/Review-conditions-for-valid-Youbike-record-7173f198f387442da15185201da6551f?pvs=4
 
         main_df = main_df[~main_df["pct_full"].isna()].copy(deep=True)
+        main_df = main_df[~main_df["30m_blag_pct_full"].isna()].copy(deep=True)
+        main_df = main_df[~main_df["120m_avg_pct_full"].isna()].copy(deep=True)
+
         # <<<<<<<<
         # Format and Validate to Schema
         main_df = features_lib.FormatToFeaturesSchema("pandas").run(main_df)
@@ -78,9 +81,8 @@ class FeaturesCreator_v1(FeaturesCreator):
         main_df = features_lib.TimeFeatures("pyspark").run(main_df)
         main_df = features_lib.LagFeatures("pyspark").run(main_df)
 
-
-        #TODO: Add Schema Validation
-        #TODO: Add NA validation (can include in schema)
+        # TODO: Add Schema Validation
+        # TODO: Add NA validation (can include in schema)
         return main_df
 
 
@@ -101,4 +103,3 @@ if __name__ == "__main__":
             end_period=pd.Timestamp("2024 04 30"),
         )
     )
-

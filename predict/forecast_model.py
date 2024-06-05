@@ -1,17 +1,18 @@
 from abc import ABC, abstractmethod
 import pandas as pd
 from utils.s3_helper import ConnectionToS3
-from etl.transform.features_creator import FeaturesCreator, FeaturesCreator_v1
+from etl.transform.features_creator import FeaturesCreator_v1
 from io import BytesIO
 import pickle
 from sklearn.linear_model import LinearRegression
+from db.main import get_all_valid_stations_id
 
 
 class ForecastModel(ABC):
+    """Abstract Forecaster class that provides an interface to forecast youbike demand."""
 
-    def __init__(self, model_name: str, features_creator: FeaturesCreator) -> None:
+    def __init__(self, model_name: str) -> None:
         self.model_path = "model/" + model_name + ".pkl"
-        self.features_creator = features_creator
         self.s3_connection = ConnectionToS3.from_env()
         self.model = self.__get_model()
 
@@ -45,8 +46,9 @@ class RegressionYouBikeModel(ForecastModel):
 
     """
 
-    def __init__(self, model_name: str, features_creator: FeaturesCreator):
-        super().__init__(model_name, features_creator)
+    def __init__(self, model_name: str):
+        super().__init__(model_name)
+        self.features_creator = FeaturesCreator_v1()
         # MODEL_PATH = "model/model_2024-03-29.pkl"
 
         # COULD ADD A "NBR OF FUTURE PREDICTED TS as options. For now default is 1 - later should be 3H so 6"
@@ -85,7 +87,8 @@ class RegressionYouBikeModel(ForecastModel):
 
     def forecast(self, station_ids: list[int]) -> pd.DataFrame:
         print("forecasting for ids: ", station_ids)
-        features_df = self.features_creator().make_prediction_features(station_ids)
+        features_df = self.features_creator.make_prediction_features(station_ids)
+        features_df.to_parquet("./tmp/features_df.parquet")
         forecast_df = self.__make_forecast(features_df)
 
         t_0_records = features_df[["station_id", "pct_full"]].rename(
@@ -144,10 +147,8 @@ if __name__ == "__main__":
         508201024,
         508201026,
     ]
-
+    test_station_ids = get_all_valid_stations_id()
     print(
-        RegressionYouBikeModel(
-            model_name="model_2024-03-29", features_creator=FeaturesCreator_v1()
-        ).forecast(test_station_ids)
+        RegressionYouBikeModel(model_name="model_2024-03-29").forecast(test_station_ids)
     )
     # print(RegressionYouBikeModel().model)
