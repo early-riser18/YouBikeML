@@ -29,14 +29,13 @@ class ForecastModel(ABC):
         try:
             s3_res = bucket.Object(self.model_path).get()
             buffer = BytesIO(s3_res["Body"].read())
+            buffer.seek(0)
+            model = pickle.load(buffer)
+            return model
         # Need to refactor to handle correct exception when not found.
         except Exception as e:
             Exception("Encountered exception: ", e)
             ## Once you handle the exception, set a Warning instead and proceed by returning None. It means the object expects to be trained.
-
-        buffer.seek(0)
-        model = pickle.load(buffer)
-        return model
 
 
 class RegressionYouBikeModel(ForecastModel):
